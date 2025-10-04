@@ -2,8 +2,7 @@ from config import Config
 
 from pyrogram import Client
 
-from .logger import LOGGER
-from .settings import bot_set
+from bot import LOGGER
 
 plugins = dict(
     root="bot/modules"
@@ -23,15 +22,10 @@ class Bot(Client):
 
     async def start(self):
         await super().start()
-        await bot_set.login_qobuz()
-        await bot_set.login_deezer()
-        await bot_set.login_tidal()
         LOGGER.info("BOT : Started Successfully")
 
     async def stop(self, *args):
         await super().stop()
-        for client in bot_set.clients:
-            await client.session.close()
         LOGGER.info('BOT : Exited Successfully ! Bye..........')
 
 aio = Bot()

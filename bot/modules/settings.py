@@ -6,7 +6,7 @@ import bot.helpers.translations as lang
 
 from ..settings import bot_set
 from ..helpers.buttons.settings import *
-from ..helpers.database.pg_impl import set_db
+from ..helpers.database.pg_impl import settings_db
 from ..helpers.message import send_message, edit_message, check_user, fetch_user_details
 
 from config import DEEZER_VARS, TIDAL_VARS, QOBUZ_VARS, Config
@@ -43,7 +43,7 @@ async def upload_mode_cb(client, cb:CallbackQuery):
         current = modes.index(bot_set.upload_mode)
         nexti = (current + 1) % modes_count
         bot_set.upload_mode = modes[nexti]
-        set_db.set_variable('UPLOAD_MODE', modes[nexti])
+        settings_db.set_variable('UPLOAD_MODE', modes[nexti])
         try:
             await core_cb(client, cb)
         except:
@@ -57,7 +57,7 @@ async def link_option_cb(client, cb:CallbackQuery):
         current = options.index(bot_set.link_options)
         nexti = (current + 1) % 4
         bot_set.link_options = options[nexti]
-        set_db.set_variable('RCLONE_LINK_OPTIONS', options[nexti])
+        settings_db.set_variable('RCLONE_LINK_OPTIONS', options[nexti])
         try:
             await core_cb(client, cb)
         except:
@@ -70,7 +70,7 @@ async def alb_art_cb(client, cb:CallbackQuery):
         art_post = bot_set.art_poster
         art_post = False if art_post else True
         bot_set.art_poster = art_post
-        set_db.set_variable('ART_POSTER', art_post)
+        settings_db.set_variable('ART_POSTER', art_post)
         try:
             await core_cb(client, cb)
         except:
@@ -82,7 +82,7 @@ async def playlist_conc_cb(client, cb:CallbackQuery):
         play_conc = bot_set.playlist_conc
         play_conc = False if play_conc else True
         bot_set.playlist_conc = play_conc
-        set_db.set_variable('PLAYLIST_CONCURRENT', play_conc)
+        settings_db.set_variable('PLAYLIST_CONCURRENT', play_conc)
         try:
             await core_cb(client, cb)
         except:
@@ -94,7 +94,7 @@ async def artist_conc_cb(client, cb:CallbackQuery):
         artist_batch = bot_set.artist_batch
         artist_batch = False if artist_batch else True
         bot_set.artist_batch = artist_batch
-        set_db.set_variable('ARTIST_BATCH_UPLOAD', artist_batch)
+        settings_db.set_variable('ARTIST_BATCH_UPLOAD', artist_batch)
         try:
             await core_cb(client, cb)
         except:
@@ -106,7 +106,7 @@ async def playlist_sort_cb(client, cb:CallbackQuery):
         sort = bot_set.playlist_sort
         sort = False if sort else True
         bot_set.playlist_sort = sort
-        set_db.set_variable('PLAYLIST_SORT', sort)
+        settings_db.set_variable('PLAYLIST_SORT', sort)
         try:
             await core_cb(client, cb)
         except:
@@ -119,7 +119,7 @@ async def playlist_zip_cb(client, cb:CallbackQuery):
         option = bot_set.playlist_zip
         option = False if option else True
         bot_set.playlist_zip = option
-        set_db.set_variable('PLAYLIST_ZIP', option)
+        settings_db.set_variable('PLAYLIST_ZIP', option)
         try:
             await core_cb(client, cb)
         except:
@@ -132,7 +132,7 @@ async def playlist_disable_zip_link(client, cb:CallbackQuery):
         option = bot_set.disable_sort_link
         option = False if option else True
         bot_set.disable_sort_link = option
-        set_db.set_variable('PLAYLIST_LINK_DISABLE', option)
+        settings_db.set_variable('PLAYLIST_LINK_DISABLE', option)
         try:
             await core_cb(client, cb)
         except:
@@ -145,7 +145,7 @@ async def artist_zip_cb(client, cb:CallbackQuery):
         option = bot_set.artist_zip
         option = False if option else True
         bot_set.artist_zip = option
-        set_db.set_variable('ARTIST_ZIP', option)
+        settings_db.set_variable('ARTIST_ZIP', option)
         try:
             await core_cb(client, cb)
         except:
@@ -158,7 +158,7 @@ async def album_zip_cb(client, cb:CallbackQuery):
         option = bot_set.album_zip
         option = False if option else True
         bot_set.album_zip = option
-        set_db.set_variable('ALBUM_ZIP', option)
+        settings_db.set_variable('ALBUM_ZIP', option)
         try:
             await core_cb(client, cb)
         except:
@@ -203,12 +203,12 @@ async def ban(client:Client, msg:Message):
         if user:
             if id in bot_set.auth_users:
                 bot_set.auth_users.remove(id)
-                set_db.set_variable('AUTH_USERS', str(bot_set.auth_users))
+                settings_db.set_variable('AUTH_USERS', str(bot_set.auth_users))
             else: await send_message(msg, lang.s.USER_DOEST_EXIST)
         else:
             if id in bot_set.auth_chats:
                 bot_set.auth_chats.remove(id)
-                set_db.set_variable('AUTH_CHATS', str(bot_set.auth_chats))
+                settings_db.set_variable('AUTH_CHATS', str(bot_set.auth_chats))
             else: await send_message(msg, lang.s.USER_DOEST_EXIST)
         await send_message(msg, lang.s.BAN_ID)
         
@@ -226,12 +226,12 @@ async def auth(client:Client, msg:Message):
         if user:
             if id not in bot_set.auth_users:
                 bot_set.auth_users.append(id)
-                set_db.set_variable('AUTH_USERS', str(bot_set.auth_users))
+                settings_db.set_variable('AUTH_USERS', str(bot_set.auth_users))
             else: await send_message(msg, lang.s.USER_EXIST)
         else:
             if id not in bot_set.auth_chats:
                 bot_set.auth_chats.append(id)
-                set_db.set_variable('AUTH_CHATS', str(bot_set.auth_chats))
+                settings_db.set_variable('AUTH_CHATS', str(bot_set.auth_chats))
             else: await send_message(msg, lang.s.USER_EXIST)
         await send_message(msg, lang.s.AUTH_ID)
 
@@ -260,7 +260,7 @@ async def set_var(client: Client, msg: Message):
             return await msg.reply("Missing value. Usage: `/setvar VAR_NAME value`", quote=True)
 
         setattr(Config, var_name, var_value)
-        set_db.set_variable(var_name, var_value)
+        settings_db.set_variable(var_name, var_value)
 
         if var_name in DEEZER_VARS:
             try:

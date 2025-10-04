@@ -4,17 +4,16 @@ import hashlib
 import aiohttp
 import aiolimiter
 
-from config import Config
-
 from .bundle import Bundle
+from .errors import *
 
-from bot.logger import LOGGER
+from bot import LOGGER
 
 class QoClient:
     def __init__(self):
-        self.id = None
-        self.secrets = None
-        self.session = None
+        self.id: str
+        self.secrets: list
+        self.session: aiohttp.ClientSession
         self.ratelimit = aiolimiter.AsyncLimiter(30, 60)
         self.base = "https://www.qobuz.com/api.json/0.2/"
         self.sec = None
@@ -78,7 +77,7 @@ class QoClient:
             track_id = kwargs["id"]
             fmt_id = kwargs["fmt_id"]
             if int(fmt_id) not in (5, 6, 7, 27):
-                raise Exception("QOBUZ : Invalid quality id: choose between 5, 6, 7 or 27")
+                raise InvalidQualityId()
             r_sig = "trackgetFileUrlformat_id{}intentstreamtrack_id{}{}{}".format(
                 fmt_id, track_id, unix, kwargs.get("sec", self.sec)
             )
@@ -99,17 +98,15 @@ class QoClient:
         async with self.ratelimit:
             async with self.session.get(self.base + epoint, params=params) as r:
                 if epoint == "user/login":
-                    if r.status == 401:
-                        raise Exception('QOBUZ : Invalid credentials given..... Disabling QOBUZ')
-                    elif r.status == 400:
-                        raise Exception("QOBUZ : Invalid App ID. Please Recheck your credentials.... Disabling QOBUZ")
+                    if r.status in [401, 400]:
+                        raise InvalidCredentials('QOBUZ : Invalid Email / User ID given')
                     else:
                         pass
                 elif (
                     epoint in ["track/getFileUrl", "favorite/getUserFavorites"]
                     and r.status == 400
                 ):
-                    raise Exception("QOBUZ : Invalid App Secret. Please recheck your credentials.... Disabling QOBUZ")
+                    raise InvalidCredentials("QOBUZ : Invalid App Secret")
                 return await r.json()
 
 
@@ -128,27 +125,7 @@ class QoClient:
                 yield j
                 total -= 500
             offset += 500
-
-
-    async def auth(self):
-        if Config.QOBUZ_EMAIL:
-            usr_info = await self.api_call(
-                "user/login", 
-                email=Config.QOBUZ_EMAIL, 
-                pwd=Config.QOBUZ_PASSWORD)
-        else:
-            usr_info = await self.api_call(
-                "user/login", 
-                userid=Config.QOBUZ_USER,
-                usertoken=Config.QOBUZ_TOKEN)
-        if not usr_info:
-            return
-        if not usr_info["user"]["credential"]["parameters"]:
-            raise Exception("QOBUZ : Free accounts are not eligible to download tracks from QOBUZ. Disabling QOBUZ for now")
-        self.uat = usr_info["user_auth_token"]
-        self.session.headers.update({"X-User-Auth-Token": self.uat})
-        self.label = usr_info["user"]["credential"]["parameters"]["short_label"]
-        LOGGER.info(f"QOBUZ : Membership Status: {self.label}")
+        
 
     async def test_secret(self, sec):
         try:
@@ -157,25 +134,37 @@ class QoClient:
         except:
             return False
 
-    def get_tokens(self):
+
+    def load_tokens(self):
         bundle = Bundle()
         self.id = str(bundle.get_app_id())
         self.secrets = [
             secret for secret in bundle.get_secrets().values() if secret
-        ]  # avoid empty fields
+        ]
 
-    async def login(self):
-        self.get_tokens()
+
+    async def login(self, email, password):
+        self.load_tokens()
         self.session = aiohttp.ClientSession()
-        #self.rate_limiter = self.get_rate_limiter(30)
         self.session.headers.update(
             {
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:83.0) Gecko/20100101 Firefox/83.0",
                 "X-App-Id": self.id,
             }
         )
-        await self.auth()
+        usr_info = await self.api_call(
+            "user/login", 
+            email=email, 
+            pwd=password
+        )
+        if not usr_info["user"]["credential"]["parameters"]:
+            raise FreeAccountError()
+        self.uat = usr_info["user_auth_token"]
+        self.session.headers.update({"X-User-Auth-Token": self.uat})
+        self.label = usr_info["user"]["credential"]["parameters"]["short_label"]
+        LOGGER.info(f"QOBUZ : Membership Status: {self.label}")
         await self.cfg_setup()
+
 
     async def cfg_setup(self):
         for secret in self.secrets:
@@ -186,15 +175,11 @@ class QoClient:
                 self.sec = secret
                 break
         if self.sec is None:
-            raise Exception("QOBUZ : Can't find any valid app secret")
-
-
-
+            raise NoValidSecret()
 
 
     async def get_track_url(self, id):
-            fmt_id = self.quality
-            return await self.api_call("track/getFileUrl", id=id, fmt_id=fmt_id)
+            return await self.api_call("track/getFileUrl", id=id, fmt_id=self.quality)
 
     async def get_album_meta(self, id):
         return await self.api_call("album/get", id=id)

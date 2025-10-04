@@ -3,7 +3,7 @@ import datetime
 import psycopg2.extras
 from .pg_db import DataBaseHandle
 
-from config import Config
+from bot import Config
 
 #special_characters = ['!','#','$','%', '&','@','[',']',' ',']','_', ',', '.', ':', ';', '<', '>', '?', '\\', '^', '`', '{', '|', '}', '~']
 
@@ -91,7 +91,7 @@ class BotSettings(DataBaseHandle):
 
         self.ccur(cur)
 
-    def get_variable(self, var_name):
+    def get_variable(self, var_name: str):
         sql = "SELECT * FROM bot_settings WHERE var_name=%s"
         cur = self.scur()
 
@@ -114,10 +114,9 @@ class BotSettings(DataBaseHandle):
         else:
             return None, None
 
-        self.ccur(cur)
 
     def __del__(self):
         super().__del__()
 
 
-set_db = BotSettings()
+settings_db = BotSettings()

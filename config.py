@@ -17,7 +17,7 @@ if not os.environ.get("ENV"):
 BASE_DYNAMIC_VARS = {'RCLONE_CONFIG','RCLONE_DEST','INDEX_LINK',}
 
 TIDAL_VARS = {
-    'TIDAL_MOBILE', 'TIDAL_MOBILE_TOKEN', 'TIDAL_ATMOS_MOBILE_TOKEN',
+    'TIDAL_MOBILE_TOKEN', 'TIDAL_ATMOS_MOBILE_TOKEN',
     'TIDAL_TV_TOKEN', 'TIDAL_TV_SECRET', 'TIDAL_CONVERT_M4A',
     'TIDAL_REFRESH_TOKEN', 'TIDAL_COUNTRY_CODE',
 }
@@ -93,7 +93,6 @@ class Config(object):
     DEEZER_EMAIL = getenv("DEEZER_EMAIL", None)
     DEEZER_PASSWORD = getenv("DEEZER_PASSWORD", None)
     DEEZER_BF_SECRET = getenv("DEEZER_BF_SECRET", None)
-    #DEEZER_TRACK_URL_KEY = getenv("DEEZER_TRACK_URL_KEY", None)
     DEEZER_ARL = getenv("DEEZER_ARL", None)
 #--------------------
 
@@ -101,7 +100,6 @@ class Config(object):
 
 #--------------------
     ENABLE_TIDAL = getenv("ENABLE_TIDAL", None)
-    TIDAL_MOBILE = getenv("TIDAL_MOBILE", None) # only use email pass in mobile session
     TIDAL_MOBILE_TOKEN = getenv("TIDAL_MOBILE_TOKEN", None)
     TIDAL_ATMOS_MOBILE_TOKEN = getenv("TIDAL_ATMOS_MOBILE_TOKEN", None)
     TIDAL_TV_TOKEN = getenv("TIDAL_TV_TOKEN", None)

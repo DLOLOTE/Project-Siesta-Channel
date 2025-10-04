@@ -7,7 +7,7 @@ from config import Config
 
 from ..settings import bot_set
 from ..helpers.buttons.settings import *
-from ..helpers.database.pg_impl import set_db
+from ..helpers.database.pg_impl import settings_db
 from ..helpers.tidal.tidal_api import tidalapi
 from ..helpers.message import edit_message, check_user
 
@@ -46,7 +46,7 @@ async def qobuz_quality_cb(c, cb:CallbackQuery):
         qobuz = {5:'MP3 320', 6:'Lossless', 7:'24B<=96KHZ',27:'24B>96KHZ'}
         to_set = cb.data.split('_')[1]
         bot_set.qobuz.quality = list(filter(lambda x: qobuz[x] == to_set, qobuz))[0]
-        set_db.set_variable('QOBUZ_QUALITY', bot_set.qobuz.quality)
+        settings_db.set_variable('QOBUZ_QUALITY', bot_set.qobuz.quality)
         await qobuz_cb(c, cb)
 
 
@@ -103,12 +103,12 @@ async def tidal_set_quality_cb(c, cb:CallbackQuery):
                 
             nexti = (current + 1) % 4
             tidalapi.spatial = options[nexti]
-            set_db.set_variable('TIDAL_SPATIAL', options[nexti])
+            settings_db.set_variable('TIDAL_SPATIAL', options[nexti])
         else:
             qualities = {'LOW':'LOW','HIGH':'HIGH','LOSSLESS':'LOSSLESS','HI_RES':'MAX'}
             to_set = list(filter(lambda x: qualities[x] == to_set, qualities))[0]
             tidalapi.quality = to_set
-            set_db.set_variable('TIDAL_QUALITY', to_set)
+            settings_db.set_variable('TIDAL_QUALITY', to_set)
             
         await tidal_quality_cb(c, cb)
 
@@ -171,7 +171,7 @@ async def tidal_login_cb(c:Client, cb:CallbackQuery):
 @Client.on_callback_query(filters.regex(pattern=r"^tdRemove"))
 async def tidal_remove_login_cb(c:Client, cb:CallbackQuery):
     if await check_user(cb.from_user.id, restricted=True):
-        set_db.set_variable("TIDAL_AUTH_DATA", 0, True, None)
+        settings_db.set_variable("TIDAL_AUTH_DATA", 0, True, None)
 
         tidalapi.tv_session = None
         tidalapi.mobile_atmos = None

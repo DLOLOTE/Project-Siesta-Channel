@@ -9,21 +9,13 @@ from time import time
 from math import ceil
 from urllib.parse import urlparse
 from Cryptodome.Hash import MD5
-from Cryptodome.Cipher import Blowfish, AES
-from requests.models import HTTPError
+from Cryptodome.Cipher import Blowfish
 
-from config import Config
-from bot.logger import LOGGER
+from .errors import *
+from bot import LOGGER
 
 CHUNK_SIZE = 2048
 
-class APIError(Exception):
-    def __init__(self, type, msg, payload):
-        self.type = type
-        self.msg = msg
-        self.payload = payload
-    def __str__(self):
-        return ', '.join((self.type, self.msg, str(self.payload)))
 
 class DeezerAPI:
     def __init__(self):
@@ -70,7 +62,7 @@ class DeezerAPI:
         return resp['results']
 
 
-    async def login(self):
+    async def setup_session(self, bf_secret):
         self.session = aiohttp.ClientSession()
         self.session.headers.update({
             'accept': '*/*',
@@ -83,21 +75,12 @@ class DeezerAPI:
             'referer': 'https://www.deezer.com/',
             'accept-language': 'en-US,en;q=0.9',
         })
-        #self.legacy_url_cipher = AES.new(Config.DEEZER_TRACK_URL_KEY.encode('ascii'), AES.MODE_ECB)
-        self.bf_secret = Config.DEEZER_BF_SECRET.encode('ascii')
-        try:
-            if Config.DEEZER_ARL:
-                await self.login_via_arl(Config.DEEZER_ARL)
-            else:
-                await self.login_via_email(
-                    Config.DEEZER_EMAIL,
-                    Config.DEEZER_PASSWORD
-                )
-        except Exception as e:
-            LOGGER.error(f"DEEZER : {e}")
-            return False
 
-        return True
+        try:
+            self.bf_secret = bf_secret.encode('ascii')
+        except:
+            raise NotValidBfSecret()
+
 
     async def login_via_email(self, email, password):
         # server sends set-cookie header with new sid
@@ -119,23 +102,24 @@ class DeezerAPI:
                 json = await r.json()
 
         if 'error' in json:
-            raise Exception('Error while getting access token, check your credentials')
+            raise InvalidCredentials()
 
         arl = await self._api_call('user.getArl')
 
-        return arl, await self.login_via_arl(arl)
+        await self.login_via_arl(arl)
+
 
     async def login_via_arl(self, arl):
         cookie = {'arl':arl}
         self.session.cookie_jar.update_cookies(cookie)
         user_data = await self._api_call('deezer.getUserData')
         if not user_data['USER']['USER_ID']:
-            raise Exception('Invalid arl')
+            raise InvalidARL()
         self.user = user_data
-        return user_data
+        LOGGER.info(f"DEEZER : Subscription - {self.user['OFFER_NAME']}")
 
 
-    async def custom_url_parse(self, link) -> (str, int):
+    async def custom_url_parse(self, link) -> tuple[str, int]:
         """
         Args:
             link: Deezer URL
@@ -154,20 +138,22 @@ class DeezerAPI:
 
         path_match = re.match(r'^\/(?:[a-z]{2}\/)?(track|album|artist|playlist)\/(\d+)\/?$', url.path)
         if not path_match:
-            raise Exception(f'DEEZER : Invalid URL: {link}')
+            raise InvalidURL(f'DEEZER : Invalid URL: {link}')
 
-        return path_match.group(1), path_match.group(2)
+        return path_match.group(1), int(path_match.group(2))
 
 
     async def get_track(self, id):
         res = await self._api_call('deezer.pageTrack', {'sng_id': id})
         return res
 
+
     async def get_track_data(self, id):
         res = await self._api_call('song.getData', {'sng_id': id})
         return res
 
-    async def get_track_url(self, id, track_token, track_token_expiry, format):
+
+    async def get_track_url(self, id, track_token, track_token_expiry, format) -> str:
         # renews license token
         if time() - self.renew_timestamp >= 3600:
             await self._api_call('deezer.getUserData')
@@ -264,5 +250,6 @@ class DeezerAPI:
             Blowfish.MODE_CBC,
             b"\x00\x01\x02\x03\x04\x05\x06\x07",
         ).decrypt(data)
+
 
 deezerapi = DeezerAPI()

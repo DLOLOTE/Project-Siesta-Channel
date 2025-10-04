@@ -2,7 +2,7 @@ import time
 import psycopg2
 import psycopg2.extras
 
-from bot.logger import LOGGER
+from bot import LOGGER
 
 class DataBaseHandle:
     _active_connections = []

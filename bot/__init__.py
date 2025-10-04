@@ -1,19 +1,21 @@
 from config import Config
-
-bot = Config.BOT_USERNAME
+from .logger import LOGGER
 
 plugins = dict(
     root="bot/modules"
 )
 
-class CMD(object):
-    START = ["start", f"start@{bot}"]
-    HELP = ["help", f"help@{bot}"]
-    SETTINGS = ["settings", f"settings@{bot}"]
-    DOWNLOAD = ["download", f"download@{bot}"]
-    BAN = ["ban", f"ban@{bot}"]
-    AUTH = ["auth", f"auth@{bot}"]
-    LOG = ["log", f"log@{bot}"]
-    SETVAR = ['setvar', f'setvar@{bot}']
+def _cmd(command: str) -> list[str]:
+    return [command, f"{command}@{Config.BOT_USERNAME}"]
+
+class CMD:
+    START = _cmd("start")
+    HELP = _cmd("help")
+    SETTINGS = _cmd("settings")
+    DOWNLOAD = _cmd("download")
+    BAN = _cmd("ban")
+    AUTH = _cmd("auth")
+    LOG = _cmd("log")
+    SETVAR = _cmd("setvar")
 
 cmd = CMD()
