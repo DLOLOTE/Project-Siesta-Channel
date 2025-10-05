@@ -10,5 +10,5 @@ class NoValidSecret(CustomError):
 class InvalidQualityId(CustomError):
     default_message = 'QOBUZ : Invalid quality id'
 
-class InvalidCredentials(CustomError):
+class InvalidCredentials(Exception):
     pass

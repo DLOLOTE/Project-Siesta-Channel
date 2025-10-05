@@ -12,7 +12,7 @@ class InvalidARL(CustomError):
     default_message = 'DEEZER: Invalid ARL provided'
 
 
-class InvalidURL(CustomError):
+class InvalidURL(Exception):
     pass
 
 

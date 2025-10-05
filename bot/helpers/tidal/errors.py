@@ -1,17 +1,14 @@
-from bot.utils.errors import CustomError
-
-
-class InvalidAPIResponse(CustomError):
+class InvalidAPIResponse(Exception):
     pass
 
 
-class RegionLocked(CustomError):
+class RegionLocked(Exception):
     pass
 
 
-class InvalidCredentials(CustomError):
+class InvalidCredentials(Exception):
     pass
 
 
-class AuthError(CustomError):
+class AuthError(Exception):
     pass

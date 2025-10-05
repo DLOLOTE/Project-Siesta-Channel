@@ -6,3 +6,13 @@ class CustomError(Exception):
         self.code = code
         self.context = context
         super().__init__(message or self.default_message)
+
+
+class DownloadTimeout(CustomError):
+    default_message = "DOWNLOADER: Download failed due to timeout"
+
+class DownloadExceedMaxRetry(Exception):
+    pass
+
+class DownloadError(Exception):
+    pass
