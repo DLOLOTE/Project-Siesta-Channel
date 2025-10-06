@@ -7,8 +7,6 @@ import zipfile
 
 from pathlib import Path
 from urllib.parse import quote
-from aiohttp import ClientTimeout
-from pyrogram.errors import MessageNotModified
 from concurrent.futures import ThreadPoolExecutor
 from pyrogram.errors import FloodWait
 
@@ -22,7 +20,6 @@ from .message import send_message, edit_message
 
 
 MAX_SIZE = 1.9 * 1024 * 1024 * 1024  # 2GB
-# download folder structure : BASE_DOWNLOAD_DIR + message_r_id
 
 
 

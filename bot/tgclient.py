@@ -5,7 +5,7 @@ from pyrogram import Client
 from bot import LOGGER
 
 plugins = dict(
-    root="bot/modules"
+    root="bot/telegram"
 )
 
 class Bot(Client):
