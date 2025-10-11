@@ -4,10 +4,6 @@ from pyrogram import Client
 
 from bot import LOGGER
 
-plugins = dict(
-    root="bot/telegram"
-)
-
 class Bot(Client):
     def __init__(self):
         super().__init__(
@@ -15,7 +11,7 @@ class Bot(Client):
             api_id=Config.APP_ID,
             api_hash=Config.API_HASH,
             bot_token=Config.TG_BOT_TOKEN,
-            plugins=plugins,
+            plugins={"root": "bot/telegram"},
             workdir=Config.WORK_DIR,
             workers=100
         )
@@ -28,4 +24,4 @@ class Bot(Client):
         await super().stop()
         LOGGER.info('BOT : Exited Successfully ! Bye..........')
 
-aio = Bot()
+siesta = Bot()

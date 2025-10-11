@@ -1,4 +1,4 @@
-import bot.helpers.translations as lang
+from ..helpers.translations import L
 
 from pyrogram import Client, filters
 from pyrogram.types import CallbackQuery, Message
@@ -18,7 +18,7 @@ async def provider_cb(c, cb:CallbackQuery):
     if await check_user(cb.from_user.id, restricted=True):
         await edit_message(
             cb.message,
-            lang.s.PROVIDERS_PANEL,
+            L.PROVIDERS_PANEL,
             providers_button()
         )
 
@@ -35,7 +35,7 @@ async def qobuz_cb(c, cb:CallbackQuery):
         try:
             await edit_message(
                 cb.message,
-                lang.s.QOBUZ_QUALITY_PANEL,
+                L.QOBUZ_QUALITY_PANEL,
                 markup=qb_button(quality)
             )
         except:pass
@@ -58,7 +58,7 @@ async def tidal_cb(c, cb:CallbackQuery):
     if await check_user(cb.from_user.id, restricted=True):
         await edit_message(
             cb.message,
-            lang.s.TIDAL_PANEL,
+            L.TIDAL_PANEL,
             tidal_buttons() # auth and quality button (quality button only if auth already done)
         )
     
@@ -77,7 +77,7 @@ async def tidal_quality_cb(c, cb:CallbackQuery):
 
         await edit_message(
             cb.message,
-            lang.s.TIDAL_PANEL,
+            L.TIDAL_PANEL,
             tidal_quality_button(qualities)
         )
 
@@ -125,7 +125,7 @@ async def tidal_auth_cb(c, cb:CallbackQuery):
 
         await edit_message(
             cb.message,
-            lang.s.TIDAL_AUTH_PANEL.format(sub, hires, atmos, tv),
+            L.TIDAL_AUTH_PANEL.format(sub, hires, atmos, tv),
             tidal_auth_buttons()
         )
 
@@ -142,7 +142,7 @@ async def tidal_login_cb(c:Client, cb:CallbackQuery):
     
         await edit_message(
             cb.message,
-            lang.s.TIDAL_AUTH_URL.format(auth_url),
+            L.TIDAL_AUTH_URL.format(auth_url),
             tidal_auth_buttons()
         )
 
@@ -150,7 +150,7 @@ async def tidal_login_cb(c:Client, cb:CallbackQuery):
         if err:
             return await edit_message(
                 cb.message,
-                lang.s.ERR_LOGIN_TIDAL_TV_FAILED.format(err),
+                L.ERR_LOGIN_TIDAL_TV_FAILED.format(err),
                 tidal_auth_buttons()
             )
         if sub:
@@ -164,7 +164,7 @@ async def tidal_login_cb(c:Client, cb:CallbackQuery):
             tv = True if tidalapi.tv_session else False
             await edit_message(
                 cb.message,
-                lang.s.TIDAL_AUTH_PANEL.format(sub, hires, atmos, tv) + '\n' + lang.s.TIDAL_AUTH_SUCCESSFULL,
+                L.TIDAL_AUTH_PANEL.format(sub, hires, atmos, tv) + '\n' + L.TIDAL_AUTH_SUCCESSFULL,
                 tidal_auth_buttons()
             )
 
@@ -184,7 +184,7 @@ async def tidal_remove_login_cb(c:Client, cb:CallbackQuery):
 
         await c.answer_callback_query(
             cb.id,
-            lang.s.TIDAL_REMOVED_SESSION,
+            L.TIDAL_REMOVED_SESSION,
             True
         )
 

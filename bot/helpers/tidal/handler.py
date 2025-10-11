@@ -13,8 +13,7 @@ from ..uploder import *
 from ..message import send_message
 
 from ...settings import bot_set
-import bot.helpers.translations as lang
-
+from ..translations import L
 from bot.logger import LOGGER
 from config import Config
 

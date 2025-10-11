@@ -11,7 +11,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pyrogram.errors import FloodWait
 
 from config import Config
-import bot.helpers.translations as lang
+from ..helpers.translations import L
 
 from ..logger import LOGGER
 from ..settings import bot_set
@@ -225,9 +225,9 @@ async def post_art_poster(user:dict, meta:dict):
     """
     photo = meta['cover']
     if meta['type'] == 'album':
-        caption = await format_string(lang.s.ALBUM_TEMPLATE, meta, user)
+        caption = await format_string(L.ALBUM_TEMPLATE, meta, user)
     else:
-        caption = await format_string(lang.s.PLAYLIST_TEMPLATE, meta, user)
+        caption = await format_string(L.PLAYLIST_TEMPLATE, meta, user)
     
     if bot_set.art_poster:
         msg = await send_message(user, photo, 'pic', caption)
@@ -236,7 +236,7 @@ async def post_art_poster(user:dict, meta:dict):
 
 async def create_simple_text(meta, user):
     caption = await format_string(
-        lang.s.SIMPLE_TITLE.format(
+        L.SIMPLE_TITLE.format(
             meta['title'],
             meta['type'].title(),
             meta['provider']

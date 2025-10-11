@@ -1,28 +1,28 @@
-import bot.helpers.translations as lang
+from bot.helpers.translations import L
 
 from bot.settings import bot_set
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
-main_button = [[InlineKeyboardButton(text=lang.s.MAIN_MENU_BUTTON, callback_data="main_menu")]]
-close_button = [[InlineKeyboardButton(text=lang.s.CLOSE_BUTTON, callback_data="close")]]
+main_button = [[InlineKeyboardButton(text=L.MAIN_MENU_BUTTON, callback_data="main_menu")]]
+close_button = [[InlineKeyboardButton(text=L.CLOSE_BUTTON, callback_data="close")]]
 
 def main_menu():
     inline_keyboard = [
         [
             InlineKeyboardButton(
-                text=lang.s.CORE,
+                text=L.CORE,
                 callback_data='corePanel'
             )
         ],
         [
             InlineKeyboardButton(
-                text=lang.s.TELEGRAM,
+                text=L.TELEGRAM,
                 callback_data='tgPanel'
             )
         ],
         [
             InlineKeyboardButton(
-                text=lang.s.PROVIDERS,
+                text=L.PROVIDERS,
                 callback_data='providerPanel'
             )
         ]
@@ -36,7 +36,7 @@ def providers_button():
         inline_keyboard.append(
             [
                 InlineKeyboardButton(
-                    text=lang.s.QOBUZ,
+                    text=L.QOBUZ,
                     callback_data='qbP'
                 )
             ]
@@ -45,7 +45,7 @@ def providers_button():
         inline_keyboard.append(
             [
                 InlineKeyboardButton(
-                    text=lang.s.DEEZER,
+                    text=L.DEEZER,
                     callback_data='dzP'
                 )
             ]
@@ -54,7 +54,7 @@ def providers_button():
         inline_keyboard.append(
             [
                 InlineKeyboardButton(
-                    text=lang.s.TIDAL,
+                    text=L.TIDAL,
                     callback_data='tdP'
                 )
             ]
@@ -67,19 +67,19 @@ def tg_button():
     inline_keyboard = [
         [
             InlineKeyboardButton(
-                text=lang.s.BOT_PUBLIC.format(bot_set.bot_public),
+                text=L.BOT_PUBLIC.format(bot_set.bot_public),
                 callback_data='botPublic'
             )
         ],
         [
             InlineKeyboardButton(
-                text=lang.s.ANTI_SPAM.format(bot_set.anti_spam),
+                text=L.ANTI_SPAM.format(bot_set.anti_spam),
                 callback_data='antiSpam'
             )
         ],
         [
             InlineKeyboardButton(
-                text=lang.s.LANGUAGE,
+                text=L.LANGUAGE,
                 callback_data='langPanel'
             )
         ]
@@ -111,41 +111,41 @@ def core_buttons():
         ],
         [
             InlineKeyboardButton(
-                text=lang.s.SORT_PLAYLIST.format(bot_set.playlist_sort),
+                text=L.SORT_PLAYLIST.format(bot_set.playlist_sort),
                 callback_data='sortPlay'
             ),
             InlineKeyboardButton(
-                text=lang.s.DISABLE_SORT_LINK.format(bot_set.disable_sort_link),
+                text=L.DISABLE_SORT_LINK.format(bot_set.disable_sort_link),
                 callback_data='sortLinkPlay'
             )
         ],
         [
             InlineKeyboardButton(
-                text=lang.s.PLAYLIST_ZIP.format(bot_set.playlist_zip),
+                text=L.PLAYLIST_ZIP.format(bot_set.playlist_zip),
                 callback_data='playZip'
             ),
             InlineKeyboardButton(
-                text=lang.s.PLAYLIST_CONC_BUT.format(bot_set.playlist_conc),
+                text=L.PLAYLIST_CONC_BUT.format(bot_set.playlist_conc),
                 callback_data='playCONC'
             )
         ],
         [
             InlineKeyboardButton(
-                text=lang.s.ARTIST_BATCH_BUT.format(bot_set.artist_batch),
+                text=L.ARTIST_BATCH_BUT.format(bot_set.artist_batch),
                 callback_data='artBATCH'
             ),
             InlineKeyboardButton(
-                text=lang.s.ARTIST_ZIP.format(bot_set.artist_zip),
+                text=L.ARTIST_ZIP.format(bot_set.artist_zip),
                 callback_data='artZip'
             )
         ],
         [
             InlineKeyboardButton(
-                text=lang.s.ALBUM_ZIP.format(bot_set.album_zip),
+                text=L.ALBUM_ZIP.format(bot_set.album_zip),
                 callback_data='albZip'
             ),
             InlineKeyboardButton(
-                text=lang.s.POST_ART_BUT.format(bot_set.art_poster),
+                text=L.POST_ART_BUT.format(bot_set.art_poster),
                 callback_data='albArt'
             )
         ]
@@ -176,7 +176,7 @@ def tidal_buttons():
     inline_keyboard = [
         [
             InlineKeyboardButton(
-                text=lang.s.AUTHORIZATION,
+                text=L.AUTHORIZATION,
                 callback_data='tdAuth'
             )
         ]
@@ -186,7 +186,7 @@ def tidal_buttons():
         inline_keyboard.append(
             [
                 InlineKeyboardButton(
-                    text=lang.s.QUALITY,
+                    text=L.QUALITY,
                     callback_data='tdQ'
                 )
             ]
@@ -201,13 +201,13 @@ def tidal_auth_buttons():
         inline_keyboard += [
             [
                 InlineKeyboardButton(
-                    text=lang.s.TIDAL_REMOVE_LOGIN,
+                    text=L.TIDAL_REMOVE_LOGIN,
                     callback_data=f'tdRemove'
                 )
             ],
             [
                 InlineKeyboardButton(
-                    text=lang.s.TIDAL_REFRESH_SESSION,
+                    text=L.TIDAL_REFRESH_SESSION,
                     callback_data=f'tdFresh'
                 )
             ]
@@ -216,7 +216,7 @@ def tidal_auth_buttons():
         inline_keyboard.append(
             [
                 InlineKeyboardButton(
-                    text=lang.s.TIDAL_LOGIN_TV,
+                    text=L.TIDAL_LOGIN_TV,
                     callback_data=f'tdLogin'
                 )
             ]

@@ -66,6 +66,27 @@ class Config(object):
     PLAYLIST_NAME_FORMAT = getenv("PLAYLIST_NAME_FORMAT", "{title} - Playlist")
     #ALBUM_NAME_FORMAT = getenv("ALBUM_PATH_FORMAT", "{album} - {albumartist}")
     TRACK_NAME_FORMAT = getenv("TRACK_NAME_FORMAT", "{title} - {artist}")
+    PROVIDERS_LINK_FORMAT = getenv("PROVIDERS_LINK_FORMAT", {
+        "tidal": (
+            "https://tidal.com",
+            "https://listen.tidal.com",
+            "tidal.com",
+            "listen.tidal.com",
+        ),
+        "deezer": (
+            "https://link.deezer.com",
+            "https://deezer.com",
+            "deezer.com",
+            "https://www.deezer.com",
+            "link.deezer.com",
+        ),
+        "qobuz": (
+            "https://play.qobuz.com",
+            "https://open.qobuz.com",
+            "https://www.qobuz.com",
+        ),
+        "spotify": ("https://open.spotify.com",),
+    })
 #--------------------
 
 # RCLONE / INDEX

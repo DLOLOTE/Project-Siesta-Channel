@@ -8,7 +8,6 @@ from mutagen.id3 import TALB, TCOP, TDRC, TIT2, TPE1, TRCK, APIC, \
     TCON, TOPE, TSRC, USLT, TPOS, TXXX
 
 from bot.logger import LOGGER
-from .utils import download_file
 
 
 metadata = {

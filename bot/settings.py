@@ -3,16 +3,13 @@ import json
 
 import requests
 
-import bot.helpers.translations as lang
+from .helpers.translations import set_lang
 
 from config import Config
 from bot.logger import LOGGER
 
 from .helpers.database.pg_impl import settings_db
-from .helpers.qobuz.qopy import qobuz_api
-from .helpers.deezer.dzapi import deezerapi
 from .helpers.tidal.tidal_api import tidalapi
-from .helpers.translations import lang_available
 
 
 # For simple boolean values
@@ -31,7 +28,8 @@ class BotSettings:
         self.tidal = None
         self.admins = Config.ADMINS
 
-        self.set_language()
+        db_lang, _ = settings_db.get_variable('BOT_LANGUAGE')
+        set_lang(db_lang)
 
         db_users, _ = settings_db.get_variable('AUTH_USERS')
         self.auth_users = json.loads(db_users) if db_users else []
@@ -149,18 +147,6 @@ class BotSettings:
 
         txt = json.dumps(data)
         settings_db.set_variable("TIDAL_AUTH_DATA", 0, True, __encrypt_string__(txt))
-        
-
-
-
-    def set_language(self):
-        db_lang, _ = settings_db.get_variable('BOT_LANGUAGE') #str
-        self.bot_lang = db_lang if db_lang else 'en'
-
-        for item in lang_available:
-            if item.__language__ == self.bot_lang:
-                lang.s = item
-                break
 
 
 bot_set = BotSettings()

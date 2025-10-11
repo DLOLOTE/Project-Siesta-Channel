@@ -1,10 +1,9 @@
-import bot.helpers.translations as lang
+from ..helpers.translations import L
 
 from pyrogram import Client, filters
 from pyrogram.types import CallbackQuery, Message
 
 from ..settings import bot_set
-from ..helpers.translations import lang_available
 from ..helpers.buttons.settings import *
 from ..helpers.database.pg_impl import settings_db
 from ..helpers.message import edit_message, check_user
@@ -16,7 +15,7 @@ async def tg_cb(c, cb:CallbackQuery):
     if await check_user(cb.from_user.id, restricted=True):
         await edit_message(
             cb.message, 
-            lang.s.TELEGRAM_PANEL.format(
+            L.TELEGRAM_PANEL.format(
                 bot_set.bot_public,
                 bot_set.bot_lang,
                 len(bot_set.admins),
@@ -60,7 +59,7 @@ async def language_panel_cb(client, cb:CallbackQuery):
         current = bot_set.bot_lang
         await edit_message(
             cb.message,
-            lang.s.LANGUAGE_PANEL,
+            L.LANGUAGE_PANEL,
             language_buttons(lang_available, current)
         )
 

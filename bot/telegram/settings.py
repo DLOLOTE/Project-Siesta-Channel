@@ -2,12 +2,11 @@ from bot import CMD
 from pyrogram import Client, filters
 from pyrogram.types import CallbackQuery, Message
 
-import bot.helpers.translations as lang
+from ..helpers.translations import L
 
 from ..settings import bot_set
 from ..helpers.buttons.settings import *
 from ..helpers.database.pg_impl import settings_db
-from ..helpers.message import send_message, edit_message, check_user, fetch_user_details
 
 from config import DEEZER_VARS, TIDAL_VARS, QOBUZ_VARS, Config
 
@@ -17,7 +16,7 @@ from config import DEEZER_VARS, TIDAL_VARS, QOBUZ_VARS, Config
 async def settings(c, message):
     if await check_user(message.from_user.id, restricted=True):
         user = await fetch_user_details(message)
-        await send_message(user, lang.s.INIT_SETTINGS_PANEL, markup=main_menu())
+        await send_message(user, L.INIT_SETTINGS_PANEL, markup=main_menu())
 
 
 @Client.on_callback_query(filters.regex(pattern=r"^corePanel"))
@@ -25,7 +24,7 @@ async def core_cb(client, cb:CallbackQuery):
     if await check_user(cb.from_user.id, restricted=True):
         await edit_message(
             cb.message,
-            lang.s.CORE_PANEL,
+            L.CORE_PANEL,
             core_buttons()
         )
 
@@ -175,7 +174,7 @@ async def album_zip_cb(client, cb:CallbackQuery):
 async def main_menu_cb(client, cb:CallbackQuery):
     if await check_user(cb.from_user.id, restricted=True):
         try:
-            await edit_message(cb.message, lang.s.INIT_SETTINGS_PANEL, markup=main_menu())
+            await edit_message(cb.message, L.INIT_SETTINGS_PANEL, markup=main_menu())
         except:
             pass
 
@@ -196,7 +195,7 @@ async def ban(client:Client, msg:Message):
         try:
             id = int(msg.text.split(" ", maxsplit=1)[1])
         except:
-            await send_message(msg, lang.s.BAN_AUTH_FORMAT)
+            await send_message(msg, L.BAN_AUTH_FORMAT)
             return
 
         user = False if str(id).startswith('-100') else True
@@ -204,13 +203,13 @@ async def ban(client:Client, msg:Message):
             if id in bot_set.auth_users:
                 bot_set.auth_users.remove(id)
                 settings_db.set_variable('AUTH_USERS', str(bot_set.auth_users))
-            else: await send_message(msg, lang.s.USER_DOEST_EXIST)
+            else: await send_message(msg, L.USER_DOEST_EXIST)
         else:
             if id in bot_set.auth_chats:
                 bot_set.auth_chats.remove(id)
                 settings_db.set_variable('AUTH_CHATS', str(bot_set.auth_chats))
-            else: await send_message(msg, lang.s.USER_DOEST_EXIST)
-        await send_message(msg, lang.s.BAN_ID)
+            else: await send_message(msg, L.USER_DOEST_EXIST)
+        await send_message(msg, L.BAN_ID)
         
 
 @Client.on_message(filters.command(CMD.AUTH))
@@ -219,7 +218,7 @@ async def auth(client:Client, msg:Message):
         try:
             id = int(msg.text.split(" ", maxsplit=1)[1])
         except:
-            await send_message(msg, lang.s.BAN_AUTH_FORMAT)
+            await send_message(msg, L.BAN_AUTH_FORMAT)
             return
 
         user = False if str(id).startswith('-100') else True
@@ -227,13 +226,13 @@ async def auth(client:Client, msg:Message):
             if id not in bot_set.auth_users:
                 bot_set.auth_users.append(id)
                 settings_db.set_variable('AUTH_USERS', str(bot_set.auth_users))
-            else: await send_message(msg, lang.s.USER_EXIST)
+            else: await send_message(msg, L.USER_EXIST)
         else:
             if id not in bot_set.auth_chats:
                 bot_set.auth_chats.append(id)
                 settings_db.set_variable('AUTH_CHATS', str(bot_set.auth_chats))
-            else: await send_message(msg, lang.s.USER_EXIST)
-        await send_message(msg, lang.s.AUTH_ID)
+            else: await send_message(msg, L.USER_EXIST)
+        await send_message(msg, L.AUTH_ID)
 
 
 @Client.on_message(filters.command(CMD.LOG))

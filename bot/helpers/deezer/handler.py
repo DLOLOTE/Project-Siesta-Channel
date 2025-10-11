@@ -9,7 +9,7 @@ from ..uploder import *
 from ..metadata import set_metadata, get_audio_extension
 
 from ...settings import bot_set
-import bot.helpers.translations as lang
+from ..translations import L
 
 
 
@@ -90,7 +90,7 @@ async def start_album(album_id:int, user:dict, upload=True):
         tasks.append(start_track(track['itemid'], user, track, False, album_folder))
 
     update_details = {
-        'text': lang.s.DOWNLOAD_PROGRESS,
+        'text': L.DOWNLOAD_PROGRESS,
         'msg': user['bot_msg'],
         'title': album_meta['title'],
         'type': album_meta['type']
@@ -98,12 +98,12 @@ async def start_album(album_id:int, user:dict, upload=True):
     await run_concurrent_tasks(tasks, update_details)
 
     if bot_set.album_zip:
-        await edit_message(user['bot_msg'], lang.s.ZIPPING)
+        await edit_message(user['bot_msg'], L.ZIPPING)
         album_meta['folderpath'] = await zip_handler(album_meta['folderpath'])
 
     # Upload
     if upload:
-        await edit_message(user['bot_msg'], lang.s.UPLOADING)
+        await edit_message(user['bot_msg'], L.UPLOADING)
         await album_upload(album_meta, user)
 
 
@@ -139,7 +139,7 @@ async def start_playlist(playlist_id, user):
 
 
     update_details = {
-        'text': lang.s.DOWNLOAD_PROGRESS,
+        'text': L.DOWNLOAD_PROGRESS,
         'msg': user['bot_msg'],
         'title': play_meta['title'],
         'type': play_meta['type']
@@ -163,13 +163,13 @@ async def start_playlist(playlist_id, user):
             i+=1
 
     if bot_set.playlist_zip:
-        await edit_message(user['bot_msg'], lang.s.ZIPPING)
+        await edit_message(user['bot_msg'], L.ZIPPING)
         if playlist_sort:
             play_meta['folderpath'] = await move_sorted_playlist(play_meta, user)
         play_meta['folderpath'] = await zip_handler(play_meta['folderpath'])
 
     # if others not upload
     if not upload:
-        await edit_message(user['bot_msg'], lang.s.UPLOADING)
+        await edit_message(user['bot_msg'], L.UPLOADING)
         await playlist_upload(play_meta, user)
 

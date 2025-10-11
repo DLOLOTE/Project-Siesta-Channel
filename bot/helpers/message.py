@@ -1,170 +1,137 @@
-import os
 import asyncio
 
+from pathlib import Path
 from pyrogram.types import Message
 from pyrogram.errors import MessageNotModified, FloodWait
 
-from bot.tgclient import aio
+from bot.tgclient import siesta
 from bot.settings import bot_set
-from bot.logger import LOGGER
+
+from ..utils.models import TaskDetails
+
+from bot import LOGGER
 
 
-current_user = []
-
-user_details = {
-    'user_id': None,
-    'name': None, # Name of the user 
-    'user_name': None, # Username of the user
-    'r_id': None, # Reply to message id
-    'chat_id': None,
-    'provider': None,
-    'bot_msg': None,
-    'link': None,
-    'override' : None # To skip checking media exist
-}
+current_user = set()
 
 
-async def fetch_user_details(msg: Message, reply=False) -> dict:
+async def check_user(uid=None, msg=None, restricted: bool = False) -> bool:
     """
-    args:
-        msg - pyrogram Message()
-        reply - if user message was reply to another message
-    """
-    details = user_details.copy()
+    Check whether a user or chat has access.
 
-    details['user_id'] = msg.from_user.id
-    details['name'] = msg.from_user.first_name
-    if msg.from_user.username:
-        details['user_name'] = msg.from_user.username
-    else:
-        details['user_name'] = msg.from_user.mention()
-    details['r_id'] = msg.reply_to_message.id if reply else msg.id
-    details['chat_id'] = msg.chat.id
-    try:
-        details['bot_msg'] = msg.id
-    except:
-        pass
-    return details
-
-
-async def check_user(uid=None, msg=None, restricted=False) -> bool:
-    """
     Args:
-        uid - User ID (only needed for restricted access)
-        msg - Pyrogram Message (for getting chatid and userid)
-        restricted - Access only to admins (bool)
+        uid (int, optional): User ID (used when `restricted` is True).
+        msg (pyrogram.types.Message, optional): Pyrogram message object, used to extract chat/user IDs.
+        restricted (bool, optional): If True, restricts access to bot admins only.
+
     Returns:
-        True - Can access
-        False - Cannot Access 
+        bool: True if access is allowed, False otherwise.
     """
     if restricted:
-        if uid in bot_set.admins:
-            return True
-    else:
-        if bot_set.bot_public:
-            return True
-        else:
-            all_chats = list(bot_set.admins) + bot_set.auth_chats + bot_set.auth_users 
-            if msg.from_user.id in all_chats:
-                return True
-            elif msg.chat.id in all_chats:
-                return True
+        return uid in bot_set.admins
 
+    if bot_set.bot_public:
+        return True
+
+    all_allowed = set(bot_set.admins) | set(bot_set.auth_chats) | set(bot_set.auth_users)
+    if not msg:
+        return False
+
+    return msg.from_user.id in all_allowed or msg.chat.id in all_allowed
+
+
+async def antiSpam(uid: int = None, cid: int = None, revoke: bool = False) -> bool:
+    """
+    Check or update anti-spam status for a user or chat.
+
+    Args:
+        uid (int, optional): User ID (used if anti-spam mode is 'USER').
+        cid (int, optional): Chat ID (used if anti-spam mode is 'CHAT+').
+        revoke (bool, optional): If True, removes the ID from anti-spam tracking.
+
+    Returns:
+        bool: True if currently in spam/waiting mode, False otherwise.
+    """
+    mode = bot_set.anti_spam
+    key = cid if mode == "CHAT+" else uid
+
+    if key is None:
+        return False
+
+    global current_user
+
+    if revoke:
+        current_user.discard(key)
+        return False
+
+    if key in current_user:
+        return True
+
+    current_user.add(key)
     return False
 
 
-async def antiSpam(uid=None, cid=None, revoke=False) -> bool:
+
+async def send_message(task_details: "TaskDetails", type_: str, chat_id: int | None = None, \
+    markup=None, caption=None, metadata=None, **kwargs):
     """
-    Checks if user/chat in waiting mode(anti spam)
-    Args
-        uid: User id (int)
-        cid: Chat id (int)
-        revoke: bool (if to revoke the given ID)
-    Returns:
-        True - if spam
-        False - if not spam
+    Unified sender for different content types.
+
+    Args:
+        task_details: TaskDetails object
+        type_: One of 'text', 'doc', 'audio', etc.
+        chat_id: Optional chat ID override
+        markup: Optional reply markup
+        caption: Optional caption
+        metadata: Optional metadata (used for audio, etc.)
+        kwargs: Any other Pyrogram send_* arguments
     """
-    if revoke:
-        if bot_set.anti_spam == 'CHAT+':
-            if cid in current_user:
-                current_user.remove(cid)
-        elif bot_set.anti_spam == 'USER':
-            if uid in current_user:
-                current_user.remove(uid)
-    else:
-        if bot_set.anti_spam == 'CHAT+':
-            if cid in current_user:
-                return True
-            else:
-                current_user.append(cid)
-        elif bot_set.anti_spam == 'USER':
-            if uid in current_user:
-                return True
-            else:
-                current_user.append(uid)
-        return False
+    chat_id = chat_id or task_details.chat_id
+    reply_to = task_details.reply_to_message_id
 
+    send_map = {
+        "text": "send_message",
+        "doc": "send_document",
+        "audio": "send_audio",
+    }
 
+    params = {
+        "chat_id": chat_id,
+        "reply_to_message_id": reply_to,
+        "reply_markup": markup,
+    }
 
-async def send_message(user, item, itype='text', caption=None, markup=None, chat_id=None, \
-        meta=None):
-    """
-    user: user details (dict)
-    item: to send
-    itype: pic|doc|text|audio (str)
-    caption: text
-    markup: buttons
-    chat_id: if override chat from user details
-    thumb: thumbnail for sending audio
-    meta: metadata for the audio file
-    """
-    if not isinstance(user, dict):
-        user = await fetch_user_details(user)
-    chat_id = chat_id if chat_id else user['chat_id']
+    if type_ == "text":
+        params.update(text=kwargs.get("text"), disable_web_page_preview=True)
+    elif type_ == "doc":
+        params.update(document=kwargs.get("doc"), caption=caption)
+    elif type_ == "audio":
+        params.update(
+            audio=kwargs.get("audio"),
+            caption=caption,
+            duration=metadata.duration,
+            performer=metadata.artist,
+            title=metadata.title,
+            thumb=metadata.thumbnail,
+        )
 
-    try:
-        if itype == 'text':
-            msg = await aio.send_message(
-                chat_id=chat_id,
-                text=item,
-                reply_to_message_id=user['r_id'],
-                reply_markup=markup,
-                disable_web_page_preview=True
-            )
-            
-        elif itype == 'doc':
-            msg = await aio.send_document(
-                chat_id=chat_id,
-                document=item,
-                caption=caption,
-                reply_to_message_id=user['r_id']
-            )
+    method = getattr(siesta, send_map[type_])
 
-        elif itype == 'audio':
-            msg = await aio.send_audio(
-                chat_id=chat_id,
-                audio=item,
-                caption=caption,
-                duration=int(meta['duration']),
-                performer=meta['artist'],
-                title=meta['title'],
-                thumb=meta['thumbnail'],
-                reply_to_message_id=user['r_id']
-            )
+    retries = 3
+    for attempt in range(retries):
+        try:
+            msg = await method(**params)
+            return msg
+        except FloodWait as e:
+            wait_time = e.value
+            LOGGER.info(f"TELEGRAM: [FloodWait] Sleeping for {wait_time}s before retrying (attempt {attempt+1}/{retries})")
+            await asyncio.sleep(wait_time)
+        except Exception as e:
+            LOGGER.info(f"[Error] Failed to send {type_}: {e}")
+            if attempt + 1 == retries:
+                raise  # re-raise last error
 
-        elif itype == 'pic':
-            msg = await aio.send_photo(
-                chat_id=chat_id,
-                photo=item,
-                caption=caption,
-                reply_to_message_id=user['r_id']
-            )
-
-    except FloodWait as e:
-        await asyncio.sleep(e.value)
-        return await send_message(user, item, itype, caption, markup, chat_id, meta)
-
-    return msg
+    return None
 
 
 async def edit_message(msg:Message, text, markup=None, antiflood=True):

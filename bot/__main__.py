@@ -3,7 +3,7 @@ import os
 
 from config import Config, DYNAMIC_VARS
 
-from .tgclient import aio
+from .tgclient import siesta
 from .loader import load_clients
 from .helpers.database.pg_impl import settings_db
 
@@ -22,5 +22,5 @@ if __name__ == "__main__":
     load_dynamic_vars()
     loop = asyncio.new_event_loop()
     loop.run_until_complete(load_clients())
-    aio.run()
+    siesta.run()
     
