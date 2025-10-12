@@ -3,11 +3,9 @@ import json
 
 import requests
 
+from bot import LOGGER, Config
+
 from .helpers.translations import set_lang
-
-from config import Config
-from bot import LOGGER
-
 from .helpers.database.pg_impl import settings_db
 
 
