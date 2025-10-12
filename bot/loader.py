@@ -1,5 +1,4 @@
 import json
-import base64
 
 from bot import LOGGER, Config
 
@@ -7,20 +6,7 @@ from .helpers.database.pg_impl import settings_db
 from .helpers.qobuz.qopy import qobuz_api
 from .helpers.deezer.dzapi import deezerapi
 from .helpers.tidal.tidal_api import tidalapi
-
-
-def _encrypt_string(string: str):
-    s = bytes(string, 'utf-8')
-    s = base64.b64encode(s)
-    return s
-
-def _decrypt_string(string):
-    try:
-        s = base64.b64decode(string)
-        s = s.decode()
-        return s
-    except:
-        return string
+from .utils.string import _decrypt_string
 
 
 
