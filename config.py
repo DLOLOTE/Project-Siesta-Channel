@@ -1,13 +1,6 @@
 import os
-import logging
 from os import getenv
 from dotenv import load_dotenv
-
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
-LOGGER = logging.getLogger(__name__)
 
 if not os.environ.get("ENV"):
     load_dotenv('.env', override=True)
@@ -43,7 +36,7 @@ class Config(object):
         BOT_USERNAME = getenv("BOT_USERNAME")
         ADMINS = set(int(x) for x in getenv("ADMINS").split())
     except:
-        LOGGER.warning("BOT : Essential Configs are missing")
+        print("BOT : Essential Configs are missing")
         exit(1)
 
 

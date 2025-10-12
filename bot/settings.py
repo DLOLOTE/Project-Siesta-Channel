@@ -9,14 +9,6 @@ from config import Config
 from bot import LOGGER
 
 from .helpers.database.pg_impl import settings_db
-from .helpers.tidal.tidal_api import tidalapi
-
-
-# For simple boolean values
-
-
-
-
 
 
 class BotSettings:
@@ -25,8 +17,8 @@ class BotSettings:
 
         set_lang(self._get_db_value('BOT_LANGUAGE','en'))
 
-        self.auth_users = json.loads(self._get_db_value('AUTH_USERS', []))
-        self.auth_chats = json.loads(self._get_db_value('AUTH_CHATS', []))
+        self.auth_users = json.loads(self._get_db_value('AUTH_USERS', '[]'))
+        self.auth_chats = json.loads(self._get_db_value('AUTH_CHATS', '[]'))
 
         self.rclone = False
         self._check_upload_mode()

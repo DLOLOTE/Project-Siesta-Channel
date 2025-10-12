@@ -7,13 +7,9 @@ log_file_path = "./bot/bot_logs.log"
 class Logger:
 
     def __init__(self):
-        # Config file has logging so removing that handler 
-        try:
-            logging.getLogger().removeHandler(logging.getLogger().handlers[0])
-        except:
-            pass
         self.logger = logging.getLogger()
         self.logger.setLevel(logging.DEBUG)
+
         logging.getLogger("pyrogram").setLevel(logging.WARNING)
         logging.getLogger("asyncio").setLevel(logging.WARNING)
         logging.getLogger("urllib3").setLevel(logging.WARNING)
@@ -27,9 +23,10 @@ class Logger:
         logging.getLogger("pydub").setLevel(logging.WARNING)
         logging.getLogger("spotipy").setLevel(logging.WARNING)
 
+        self.logger.propagate = False
+
         formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
 
-        # Create file handler
         file_handler = logging.FileHandler(log_file_path, 'a', 'utf-8')
         file_handler.setLevel(logging.DEBUG)
         file_handler.setFormatter(formatter)
@@ -37,22 +34,35 @@ class Logger:
 
         # Create console handler
         console_handler = logging.StreamHandler()
-        console_handler.setLevel(logging.DEBUG)
+        console_handler.setLevel(logging.INFO)  # Less verbose for console
         console_handler.setFormatter(formatter)
         self.logger.addHandler(console_handler)
 
+    def _get_caller_info(self):
+        """Get caller filename and line number"""
+        caller_frame = inspect.currentframe().f_back.f_back
+        caller_filename = os.path.basename(caller_frame.f_globals['__file__'])
+        caller_lineno = caller_frame.f_lineno
+        return caller_filename, caller_lineno
+
     def debug(self, message):
-        caller_frame = inspect.currentframe().f_back
-        caller_filename = os.path.basename(caller_frame.f_globals['__file__'])
-        self.logger.debug(f'{caller_filename} - {message}')
+        caller_filename, caller_lineno = self._get_caller_info()
+        self.logger.debug(f'{message}')
 
-    # Debug itself with no info
     def info(self, message):
-        self.logger.info(message)
+        caller_filename, caller_lineno = self._get_caller_info()
+        self.logger.info(f'{message}')
 
-    def error(self, message):
-        caller_frame = inspect.currentframe().f_back
-        caller_filename = os.path.basename(caller_frame.f_globals['__file__'])
-        self.logger.error(f'{caller_filename} - {message}')
+    def warning(self, message):
+        caller_filename, caller_lineno = self._get_caller_info()
+        self.logger.warning(f'{caller_filename}:{caller_lineno} - {message}')
+
+    def error(self, message, exc_info=False):
+        caller_filename, caller_lineno = self._get_caller_info()
+        self.logger.error(f'{caller_filename}:{caller_lineno} - {message}', exc_info=exc_info)
+
+    def critical(self, message):
+        caller_filename, caller_lineno = self._get_caller_info()
+        self.logger.critical(f'{caller_filename}:{caller_lineno} - {message}')
 
 LOGGER = Logger()
