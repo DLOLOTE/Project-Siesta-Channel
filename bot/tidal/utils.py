@@ -33,7 +33,6 @@ async def parse_url(url):
     for pattern, type_ in patterns:
         match = re.search(pattern, url)
         if match:
-            #return {"type": type_, "id": match.group(1)}
             return match.group(1), type_
     
     return None, None

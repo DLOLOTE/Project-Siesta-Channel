@@ -5,7 +5,7 @@ from bot import LOGGER, Config
 from .helpers.database.pg_impl import settings_db
 from .helpers.qobuz.qopy import qobuz_api
 from .helpers.deezer.dzapi import deezerapi
-from .helpers.tidal.tidal_api import tidalapi
+from .tidal.tidal_api import tidalapi
 from .utils.string import _decrypt_string
 
 

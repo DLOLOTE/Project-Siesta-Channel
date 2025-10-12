@@ -7,38 +7,39 @@ from .tidal_api import tidalapi
 from .utils import *
 from .metadata import *
 
-from ..utils import *
-from ..metadata import set_metadata, get_audio_extension
-from ..uploder import *
-from ..message import send_message
+from ..helpers.utils import *
+from ..helpers.metadata import set_metadata, get_audio_extension
+from ..helpers.uploder import *
+from ..utils.message import send_message
 
-from ...settings import bot_set
-from ..translations import L
-from bot.logger import LOGGER
-from config import Config
+from ..settings import bot_set
+from ..helpers.translations import L
+from bot import Config, LOGGER
+from ..utils.models import TaskDetails
 
 
-async def start_tidal(url:str, user:dict):
+async def start_tidal(url:str, task_details: TaskDetails):
     item_id, type_ = await parse_url(url)
 
     if type_ == 'track':
-        await start_track(item_id, user, None)
+        await start_track(item_id, task_details, None)
     elif type_ == 'artist':
-        await start_artist(item_id, user)
+        await start_artist(item_id, task_details)
     elif type_ == 'album':
-        await start_album(item_id, user)
+        await start_album(item_id, task_details)
     elif type_ == 'playlist':
         pass
     else:
         await send_message(user, "Invalid Tidal URL")
         
 
-async def start_track(track_id:int, user:dict, track_meta:dict | None, \
+async def start_track(track_id: int, task_details: TaskDetails, track_meta:dict | None, \
     upload=True, basefolder=None, session=None, quality=None, disable_link=False, disable_msg=False):
     if not track_meta:
         try:
-            track_data = await tidalapi.get_track(track_id)
+            _raw_track_meta = await tidalapi.get_track(track_id)
         except Exception as e:
+            LOGGER.error(e)
             return await send_message(user, e)
 
         track_meta = await get_track_metadata(track_id, track_data, user['r_id'])

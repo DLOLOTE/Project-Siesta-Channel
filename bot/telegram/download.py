@@ -1,16 +1,15 @@
+import shutil
+
 from pyrogram.types import Message
 from pyrogram import Client, filters
 
 from bot import LOGGER, CMD, Config
 
 from ..helpers.translations import L
-
-from ..helpers.utils import cleanup
 from ..helpers.qobuz.handler import start_qobuz
-from ..helpers.tidal.handler import start_tidal
+from ..tidal.handler import start_tidal
 from ..helpers.deezer.handler import start_deezer
-from ..helpers.message import send_message, antiSpam, check_user
-
+from ..utils.message import send_message, antiSpam, check_user
 from ..utils.models import TaskDetails
 
 
@@ -24,10 +23,10 @@ async def download_track(c, msg: Message):
             else:
                 url = msg.text.split(" ", maxsplit=1)[1]
         except:
-            return await msg.reply_text(L.ERR_NO_LINK)
+            return await msg.reply_text(L.ERR_NO_LINK, reply_to_message_id=msg.id)
 
         if not url:
-            return await msg.reply_text(L.ERR_LINK_RECOGNITION)
+            return await msg.reply_text(L.ERR_LINK_RECOGNITION, reply_to_message_id=msg.id)
     
         spam = await antiSpam(msg.from_user.id, msg.chat.id)
         if not spam:
@@ -41,7 +40,10 @@ async def download_track(c, msg: Message):
                 LOGGER.error(e)
 
             await c.delete_messages(msg.chat.id, task_details.bot_msg.id)
-            await cleanup(user) # deletes uploaded files
+
+            shutil.rmtree(f"{Config.DOWNLOAD_BASE_DIR}/{task_details.reply_to_message_id}/", ignore_errors=True)
+            shutil.rmtree(f"{Config.DOWNLOAD_BASE_DIR}/{task_details.reply_to_message_id}-temp/", ignore_errors=True)
+
             await antiSpam(msg.from_user.id, msg.chat.id, True)
 
 

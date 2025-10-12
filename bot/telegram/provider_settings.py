@@ -8,8 +8,8 @@ from config import Config
 from ..settings import bot_set
 from ..helpers.buttons.settings import *
 from ..helpers.database.pg_impl import settings_db
-from ..helpers.tidal.tidal_api import tidalapi
-from ..helpers.message import edit_message, check_user
+from ..tidal.tidal_api import tidalapi
+from ..utils.message import edit_message, check_user
 
 
 
