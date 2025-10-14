@@ -5,7 +5,8 @@ from mutagen.id3 import TALB, TCOP, TDRC, TIT2, TPE1, TRCK, APIC, \
     TCON, TOPE, TSRC, USLT, TPOS, TXXX
 
 from bot.logger import LOGGER
-from .models import TrackMetadata, ItemDirectories
+from ..models.metadata import TrackMetadata
+from ..models.task import ItemDirectories
 
 
 

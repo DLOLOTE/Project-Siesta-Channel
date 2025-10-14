@@ -4,7 +4,6 @@ from pathlib import Path
 from aiohttp import ClientSession, ClientTimeout, ClientError
 
 from .errors import DownloadError, DownloadTimeout, DownloadExceedMaxRetry
-from .models import TrackMetadata
 
 
 class Downloader:

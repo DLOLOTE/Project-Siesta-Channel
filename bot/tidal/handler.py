@@ -15,7 +15,7 @@ from ..utils.message import send_message
 from ..settings import bot_set
 from ..helpers.translations import L
 from bot import Config, LOGGER
-from ..utils.models import TaskDetails
+from ..models.task import TaskDetails
 
 
 async def start_tidal(url:str, task_details: TaskDetails):

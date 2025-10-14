@@ -7,7 +7,7 @@ from pyrogram.errors import MessageNotModified, FloodWait
 from bot.tgclient import siesta
 from bot.settings import bot_set
 
-from ..utils.models import TaskDetails
+from ..models.task import TaskDetails
 
 from bot import LOGGER
 

@@ -10,7 +10,7 @@ from ..helpers.qobuz.handler import start_qobuz
 from ..tidal.handler import start_tidal
 from ..helpers.deezer.handler import start_deezer
 from ..utils.message import send_message, antiSpam, check_user
-from ..utils.models import TaskDetails
+from ..models.task import TaskDetails
 
 
 

@@ -2,7 +2,7 @@ import copy
 
 from datetime import datetime
 
-from ..utils.models import TrackMetadata, AlbumMetadata, ArtistMetadata
+from ..models.metadata import TrackMetadata, AlbumMetadata, ArtistMetadata
 from ..utils.downloader import downloader
 
 
