@@ -37,16 +37,16 @@ class Downloader:
                 await asyncio.sleep(2 ** attempt)
 
 
-    async def create_cover_file(self, url: str, cover_id, filepath: Path, suffix=''):
+    async def create_cover_file(self, url: str, cover_id, folder: Path, suffix=''):
         """
         Create JPEG files from URL
         Args:
             url (str): URL to be downloaded.
             data (Metadata): Metadata object.
-            filepath (Path): Where to save the file.
+            folder (Path): Where to save the file.
             suffix (str): Use '-thumb' for thumbnails
         """
-        cover_file = filepath / f"{cover_id}{suffix}.jpg"
+        cover_file = folder / f"{cover_id}{suffix}.jpg"
         
         if not cover_file.exists():
             try:

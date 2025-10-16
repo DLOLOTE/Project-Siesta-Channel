@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Optional
+from typing import Optional, Any, Union
 from pathlib import Path
 
 
@@ -27,12 +27,14 @@ class _AudioMetadata(_Metadata):
     copyright: str = ''
     date: str = ''
     volume: int = 1
+    totalvolume: int = 1
 
 
 @dataclass
 class TrackMetadata(_AudioMetadata):
     isrc: str = ''
     type_: str = 'track'
+    _extra: dict[str, Any] = field(default_factory=dict) # for any extra data needed by provider
 
 
 @dataclass
@@ -46,9 +48,18 @@ class AlbumMetadata(_AudioMetadata):
 class ArtistMetadata(_Metadata):
     albums: list[AlbumMetadata] = field(default_factory=list)
     type_: str = 'artist'
+    _extra: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
 class PlaylistMetadata(_Metadata):
     tracks: list[TrackMetadata] = field(default_factory=list)
     type_: str = 'playlist'
+
+
+MetadataType = Union[
+    TrackMetadata,
+    AlbumMetadata,
+    ArtistMetadata,
+    PlaylistMetadata,
+]

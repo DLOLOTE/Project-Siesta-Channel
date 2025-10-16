@@ -5,10 +5,9 @@ from pathvalidate import sanitize_filepath
 
 from .tidal_api import tidalapi
 from .utils import *
-from .metadata import *
+from .metadata import get_metadata
 
 from ..helpers.utils import *
-from ..helpers.metadata import set_metadata, get_audio_extension
 from ..helpers.uploder import *
 from ..utils.message import send_message
 
@@ -16,6 +15,31 @@ from ..settings import bot_set
 from ..helpers.translations import L
 from bot import Config, LOGGER
 from ..models.task import TaskDetails
+from ..models.provider_handle import Provider
+
+
+
+class TidalHandler(Provider):
+    def __init__(self):
+        super().__init__()
+        self.provider = 'tidal'
+
+
+    async def start(self, url, task_details):
+        item_id, type_ = await parse_url(url)
+        try:
+            metadata = await get_metadata(item_id, type_, task_details)
+        except Exception as e:
+            LOGGER.error(e)
+            return await send_message(task_details, 'text', text=e)
+
+
+        if type_ == 'track':
+            await self._download_track(metadata)
+
+    async def _download_track(self, metadata: TrackMetadata):
+        session, quality = await get_stream_session(metadata._extra['media_tags'])
+
 
 
 async def start_tidal(url:str, task_details: TaskDetails):

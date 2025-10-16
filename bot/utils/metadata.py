@@ -6,13 +6,10 @@ from mutagen.id3 import TALB, TCOP, TDRC, TIT2, TPE1, TRCK, APIC, \
 
 from bot.logger import LOGGER
 from ..models.metadata import TrackMetadata
-from ..models.task import ItemDirectories
 
 
 
-async def set_metadata(metadata: TrackMetadata, item_dirs: ItemDirectories):
-    audio_path = item_dirs.filepath
-
+async def set_metadata(metadata: TrackMetadata, audio_path):
     handle = File(audio_path)
 
     if metadata.duration == 0:

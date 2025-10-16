@@ -1,6 +1,7 @@
 import os
 from os import getenv
 from dotenv import load_dotenv
+from pathlib import Path
 
 if not os.environ.get("ENV"):
     load_dotenv('.env', override=True)
@@ -48,8 +49,8 @@ class Config(object):
     # For pyrogram temp files
     WORK_DIR = getenv("WORK_DIR", "./bot/")
     # Just name of the Downloads Folder
-    DOWNLOADS_FOLDER = getenv("DOWNLOADS_FOLDER", "DOWNLOADS")
-    DOWNLOAD_BASE_DIR = WORK_DIR + DOWNLOADS_FOLDER
+    _DOWNLOADS_FOLDER = getenv("DOWNLOADS_FOLDER", "DOWNLOADS")
+    DOWNLOAD_BASE_DIR = Path(WORK_DIR + _DOWNLOADS_FOLDER)
     LOCAL_STORAGE = getenv("LOCAL_STORAGE", DOWNLOAD_BASE_DIR)
 #--------------------
 

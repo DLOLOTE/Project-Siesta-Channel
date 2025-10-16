@@ -13,7 +13,7 @@ class TaskDetails:
 
         self.bot_msg: Optional[Message] = None
         self.provider: Optional[str] = None
-        self.tempfolder: Path = Path(Config.DOWNLOAD_BASE_DIR) / str(self.reply_to_message_id)
+        self.tempfolder: Path = Config.DOWNLOAD_BASE_DIR / str(self.reply_to_message_id)
         self.tempfolder.mkdir(parents=True, exist_ok=True)
 
 
@@ -41,12 +41,3 @@ class TaskDetails:
             return self.message.reply_to_message.id
         else:
             return self.message.id
-
-
-
-@dataclass
-class ItemDirectories:
-    filepath: Optional[Path] = None
-    folderpath: Optional[Path] = None
-    cover_path: Optional[Path] = None
-    thumb_path: Optional[Path] = None

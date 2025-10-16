@@ -38,16 +38,13 @@ async def parse_url(url):
     return None, None
 
 
-async def get_stream_session(track_data: dict):
+async def get_stream_session(media_tags: list):
     """
     Session needed for the quality chosen
-    Args:
-        track_data: raw data for the track
     Returns:
         session: TidalSession
         quality: LOW | HIGH | LOSSLESS | HI_RES | HI_RES_LOSSLESS
     """
-    media_tags = track_data['mediaMetadata']['tags']
 
     format = None
 
