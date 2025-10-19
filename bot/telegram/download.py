@@ -6,11 +6,14 @@ from pyrogram import Client, filters
 from bot import LOGGER, CMD, Config
 
 from ..helpers.translations import L
-from ..helpers.qobuz.handler import start_qobuz
-from ..tidal.handler import start_tidal
-from ..helpers.deezer.handler import start_deezer
+from ..tidal.handler import tidal_handler
 from ..utils.message import send_message, antiSpam, check_user
 from ..models.task import TaskDetails
+
+
+PROVIDERS = {
+    'tidal': tidal_handler
+}
 
 
 
@@ -50,7 +53,7 @@ async def download_track(c, msg: Message):
 async def start_link(url: str, task_details: TaskDetails):
     for provider, prefixes in Config.PROVIDERS_LINK_FORMAT.items():
         if url.startswith(prefixes):
-            task_details.provider = provider.capitalize()
-            return await globals()[f"start_{provider}"](url, task_details)
+            provider_obj = PROVIDERS[provider]
+            return await provider_obj.start(url, task_details)
 
     return None

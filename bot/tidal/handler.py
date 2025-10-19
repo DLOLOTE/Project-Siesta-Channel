@@ -40,6 +40,28 @@ class TidalHandler(Provider):
         session, quality = await get_stream_session(metadata._extra['media_tags'])
 
 
+    async def _download_album(self):
+        return await super()._download_album()
+
+    async def _download_artist(self):
+        return await super()._download_artist()
+
+    async def _download_playlist(self):
+        return await super()._download_playlist()
+
+
+
+tidal_handler = TidalHandler()
+
+
+
+
+
+
+
+
+
+
 
 async def start_tidal(url:str, task_details: TaskDetails):
     item_id, type_ = await parse_url(url)
