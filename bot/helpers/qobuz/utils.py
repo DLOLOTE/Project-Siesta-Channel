@@ -4,12 +4,6 @@ import copy
 import bot.helpers.translations as lang
 
 from .qopy import qobuz_api
-from ..message import send_message, edit_message
-from ..utils import format_string
-from ..metadata import create_cover_file
-
-from bot.settings import bot_set
-from config import Config
 
 
 

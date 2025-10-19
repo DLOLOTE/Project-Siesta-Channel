@@ -1,13 +1,9 @@
-import shutil
 from .utils import *
 from config import Config
 
 from pathvalidate import sanitize_filepath
 
 from ..utils import *
-from ..metadata import set_metadata
-
-from ..uploder import track_upload, album_upload, artist_upload, playlist_upload
 
 
 async def start_qobuz(url:str, user:dict):

@@ -4,10 +4,6 @@ from config import Config
 from .metadata import *
 from .dzapi import deezerapi
 
-from ..utils import *
-from ..uploder import *
-from ..metadata import set_metadata, get_audio_extension
-
 from ...settings import bot_set
 from ..translations import L
 

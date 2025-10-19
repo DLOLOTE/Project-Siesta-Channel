@@ -16,7 +16,6 @@ from ..helpers.translations import L
 from ..logger import LOGGER
 from ..settings import bot_set
 from .buttons.links import links_button
-from .message import send_message, edit_message
 
 
 MAX_SIZE = 1.9 * 1024 * 1024 * 1024  # 2GB

@@ -7,8 +7,6 @@ from .tidal_api import tidalapi
 from .utils import *
 from .metadata import get_metadata
 
-from ..helpers.utils import *
-from ..helpers.uploder import *
 from ..utils.message import send_message
 
 from ..settings import bot_set
@@ -16,6 +14,7 @@ from ..helpers.translations import L
 from bot import Config, LOGGER
 from ..models.task import TaskDetails
 from ..models.provider_handle import Provider
+from ..models.metadata import MetadataType
 
 
 
@@ -37,7 +36,7 @@ class TidalHandler(Provider):
         if type_ == 'track':
             await self._download_track(metadata)
 
-    async def _download_track(self, metadata: TrackMetadata):
+    async def _download_track(self, metadata: MetadataType):
         session, quality = await get_stream_session(metadata._extra['media_tags'])
 
 

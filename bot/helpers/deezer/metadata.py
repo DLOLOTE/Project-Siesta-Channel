@@ -2,8 +2,6 @@ import copy
 
 from datetime import datetime
 
-from ..metadata import metadata as base_meta
-from ..metadata import create_cover_file
 from .dzapi import deezerapi
 
 
