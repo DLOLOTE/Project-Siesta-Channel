@@ -14,13 +14,15 @@ def load_dynamic_vars():
         if not getattr(Config, var):
             setattr(Config, var, settings_db.get_variable(var)[0])
 
-
-
-if __name__ == "__main__":
+async def main():
     if not os.path.isdir(Config.DOWNLOAD_BASE_DIR):
         os.makedirs(Config.DOWNLOAD_BASE_DIR)
+
     load_dynamic_vars()
-    loop = asyncio.new_event_loop()
-    loop.run_until_complete(load_clients())
-    siesta.run()
-    
+
+    await siesta.start()
+    await load_clients()     
+    await siesta.idle()        
+    await siesta.stop()
+
+asyncio.run(main())

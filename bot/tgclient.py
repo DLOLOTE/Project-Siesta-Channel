@@ -1,6 +1,6 @@
 from config import Config
 
-from pyrogram import Client
+from pyrogram import Client, idle
 
 from bot import LOGGER
 
@@ -23,5 +23,8 @@ class Bot(Client):
     async def stop(self, *args):
         await super().stop()
         LOGGER.info('BOT : Exited Successfully ! Bye..........')
+
+    async def idle(self):
+        await idle()
 
 siesta = Bot()
