@@ -16,3 +16,7 @@ class DownloadExceedMaxRetry(Exception):
 
 class DownloadError(Exception):
     pass
+
+
+class MetadataTypeError(CustomError):
+    default_message = 'Metadata: Unidentified type of Item'

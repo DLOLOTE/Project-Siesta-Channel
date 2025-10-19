@@ -57,9 +57,10 @@ class Config(object):
 # FILE/FOLDER NAMING
 
 #--------------------
-    PLAYLIST_NAME_FORMAT = getenv("PLAYLIST_NAME_FORMAT", "{title} - Playlist")
-    #ALBUM_NAME_FORMAT = getenv("ALBUM_PATH_FORMAT", "{album} - {albumartist}")
-    TRACK_NAME_FORMAT = getenv("TRACK_NAME_FORMAT", "{title} - {artist}")
+    PLAYLIST_NAMING = getenv("PLAYLIST_NAMING", "{title} - Playlist")
+    ALBUM_NAMING = getenv("ALBUM_NAMING", "{album}")
+    TRACK_NAMING = getenv("TRACK_NAMING", "{title} - {artist}")
+    ARTIST_NAMING = getenv("ARTIST_NAMING", "{artist}")
     PROVIDERS_LINK_FORMAT = getenv("PROVIDERS_LINK_FORMAT", {
         "tidal": (
             "https://tidal.com",

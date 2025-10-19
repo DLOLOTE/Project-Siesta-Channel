@@ -1,4 +1,4 @@
-from bot.utils.errors import CustomError
+from ...models.errors import CustomError
 
 class NotValidBfSecret(CustomError):
     default_message = 'DEEZER: Not a valid BF Secret given'

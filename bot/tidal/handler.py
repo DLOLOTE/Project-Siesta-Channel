@@ -5,49 +5,56 @@ from pathvalidate import sanitize_filepath
 
 from .tidal_api import tidalapi
 from .utils import *
-from .metadata import get_metadata
+from .metadata import TidalMetadata
 
 from ..utils.message import send_message
 
 from ..settings import bot_set
 from ..helpers.translations import L
 from bot import Config, LOGGER
-from ..models.task import TaskDetails
-from ..models.provider_handle import Provider
-from ..models.metadata import MetadataType
+from ..models.provider import Provider
 
 
 
 class TidalHandler(Provider):
-    def __init__(self):
-        super().__init__()
-        self.provider = 'tidal'
-
-
-    async def start(self, url, task_details):
+    @classmethod
+    async def start(cls, url, task_details):
         item_id, type_ = await parse_url(url)
+
+        if not item_id:
+            LOGGER.error('TIDAL: Cannot identify the URL')
+            return
+
         try:
-            metadata = await get_metadata(item_id, type_, task_details)
+            metadata = await TidalMetadata.get_metadata(item_id, type_, task_details)
         except Exception as e:
             LOGGER.error(e)
-            return await send_message(task_details, 'text', text=e)
+            await send_message(task_details, 'text', text=e)
+            return 
 
 
         if type_ == 'track':
-            await self._download_track(metadata)
+            await cls._download_track(metadata)
 
-    async def _download_track(self, metadata: MetadataType):
+
+    @classmethod
+    async def _download_track(cls, metadata, task_details, download_path: Optional[Path] = None):
         session, quality = await get_stream_session(metadata._extra['media_tags'])
 
 
-    async def _download_album(self):
-        return await super()._download_album()
+    @classmethod
+    async def _download_album(cls, metadata):
+        pass
 
-    async def _download_artist(self):
-        return await super()._download_artist()
 
-    async def _download_playlist(self):
-        return await super()._download_playlist()
+    @classmethod
+    async def _download_artist(cls, metadata):
+        pass
+
+
+    @classmethod
+    async def _download_playlist(cls, metadata):
+        pass
 
 
 

@@ -13,7 +13,10 @@ class TaskDetails:
 
         self.bot_msg: Optional[Message] = None
         self.provider: Optional[str] = None
-        self.tempfolder: Path = Config.DOWNLOAD_BASE_DIR / str(self.reply_to_message_id)
+
+        self.dl_folder: Path = Config.DOWNLOAD_BASE_DIR / str(self.reply_to_message_id)
+        self.dl_folder.mkdir(parents=True, exist_ok=True)
+        self.tempfolder: Path = Config.DOWNLOAD_BASE_DIR / f"{self.reply_to_message_id}-temp"
         self.tempfolder.mkdir(parents=True, exist_ok=True)
 
 

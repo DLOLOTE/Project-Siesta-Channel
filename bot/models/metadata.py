@@ -46,6 +46,7 @@ class AlbumMetadata(_AudioMetadata):
 
 @dataclass
 class ArtistMetadata(_Metadata):
+    artist: str = ''
     albums: list[AlbumMetadata] = field(default_factory=list)
     type_: str = 'artist'
     _extra: dict[str, Any] = field(default_factory=dict)

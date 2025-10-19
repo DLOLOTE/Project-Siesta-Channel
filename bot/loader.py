@@ -6,7 +6,7 @@ from .helpers.database.pg_impl import settings_db
 from .helpers.qobuz.qopy import qobuz_api
 from .helpers.deezer.dzapi import deezerapi
 from .tidal.tidal_api import tidalapi
-from .utils.string import _decrypt_string
+from .utils.string import decrypt_string
 
 
 
@@ -73,7 +73,7 @@ async def login_tidal():
         _, saved_info = settings_db.get_variable("TIDAL_AUTH_DATA")
         if saved_info:
             try:
-                data = json.loads(_decrypt_string(saved_info))
+                data = json.loads(decrypt_string(saved_info))
                 LOGGER.debug("TIDAL: Using saved authentication data from Database")
             except Exception as e:
                 LOGGER.error(f"TIDAL: Failed to decrypt/parse saved auth data: {e}")
