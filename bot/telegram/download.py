@@ -6,14 +6,9 @@ from pyrogram import Client, filters
 from bot import LOGGER, CMD, Config
 
 from ..helpers.translations import L
-from ..tidal.handler import tidal_handler
 from ..utils.message import send_message, antiSpam, check_user
 from ..models.task import TaskDetails
-
-
-PROVIDERS = {
-    'tidal': tidal_handler
-}
+from ..core.ripper import Ripper
 
 
 
@@ -37,7 +32,7 @@ async def download_track(c, msg: Message):
             task_details.bot_msg = await send_message(task_details,'text', text=L.DOWNLOADING)
 
             try:
-                await start_link(url, task_details)
+                await Ripper.start(url, task_details)
                 await send_message(task_details, 'text', text=L.TASK_COMPLETED)
             except Exception as e:
                 LOGGER.error(e)
@@ -48,12 +43,3 @@ async def download_track(c, msg: Message):
             shutil.rmtree(f"{Config.DOWNLOAD_BASE_DIR}/{task_details.reply_to_message_id}-temp/", ignore_errors=True)
 
             await antiSpam(msg.from_user.id, msg.chat.id, True)
-
-
-async def start_link(url: str, task_details: TaskDetails):
-    for provider, prefixes in Config.PROVIDERS_LINK_FORMAT.items():
-        if url.startswith(prefixes):
-            provider_obj = PROVIDERS[provider]
-            return await provider_obj.start(url, task_details)
-
-    return None

@@ -5,10 +5,10 @@ from pyrogram.types import CallbackQuery, Message
 
 from config import Config
 
-from ..settings import bot_set
+from ..settings import bot_settings
 from ..helpers.buttons.settings import *
 from ..helpers.database.pg_impl import settings_db
-from ..tidal.tidal_api import tidalapi
+from ..providers.tidal.tidal_api import tidalapi
 from ..utils.message import edit_message, check_user
 
 
@@ -30,7 +30,7 @@ async def provider_cb(c, cb:CallbackQuery):
 async def qobuz_cb(c, cb:CallbackQuery):
     if await check_user(cb.from_user.id, restricted=True):
         quality = {5:'MP3 320', 6:'Lossless', 7:'24B<=96KHZ',27:'24B>96KHZ'}
-        current = bot_set.qobuz.quality
+        current = bot_settings.qobuz.quality
         quality[current] = quality[current] + '✅'
         try:
             await edit_message(
@@ -45,8 +45,8 @@ async def qobuz_quality_cb(c, cb:CallbackQuery):
     if await check_user(cb.from_user.id, restricted=True):
         qobuz = {5:'MP3 320', 6:'Lossless', 7:'24B<=96KHZ',27:'24B>96KHZ'}
         to_set = cb.data.split('_')[1]
-        bot_set.qobuz.quality = list(filter(lambda x: qobuz[x] == to_set, qobuz))[0]
-        settings_db.set_variable('QOBUZ_QUALITY', bot_set.qobuz.quality)
+        bot_settings.qobuz.quality = list(filter(lambda x: qobuz[x] == to_set, qobuz))[0]
+        settings_db.set_variable('QOBUZ_QUALITY', bot_settings.qobuz.quality)
         await qobuz_cb(c, cb)
 
 
@@ -154,10 +154,10 @@ async def tidal_login_cb(c:Client, cb:CallbackQuery):
                 tidal_auth_buttons()
             )
         if sub:
-            bot_set.tidal = tidalapi
-            bot_set.clients.append(tidalapi)
+            bot_settings.tidal = tidalapi
+            bot_settings.clients.append(tidalapi)
 
-            await bot_set.save_tidal_login(tidalapi.tv_session)
+            await bot_settings.save_tidal_login(tidalapi.tv_session)
 
             hires = True if tidalapi.mobile_hires else False
             atmos = True if tidalapi.mobile_atmos else False
@@ -180,7 +180,7 @@ async def tidal_remove_login_cb(c:Client, cb:CallbackQuery):
         tidalapi.saved = []
 
         await tidalapi.session.close()
-        bot_set.tidal = None
+        bot_settings.tidal = None
 
         await c.answer_callback_query(
             cb.id,

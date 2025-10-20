@@ -6,45 +6,68 @@ from .task import TaskDetails
 from ..utils.string import format_string
 
 
-
 class Provider(ABC):
+
     @classmethod
     @abstractmethod
-    async def start(cls, url: str, task_details: TaskDetails):
+    def parse_url(cls, url: str) -> tuple[str, str]:
+        """
+        Get item id and type from the URL 
+        
+        Returns:
+            item_id: Item ID
+            type_: Type of URL
+        """
+        pass
+
+
+    @classmethod
+    @abstractmethod
+    async def get_metadata(cls, item_id: str, type_: str, task_details: TaskDetails) -> MetadataType:
+        """
+        Get the processed metadata according to the item type.
+
+        Args:
+            item_id: track | album | artist | playlist ID from the provider.
+            type_: track | album | artist | playlist. 
+            task_details: Details of the User task.
+
+        """
+        pass
+
+
+    @classmethod
+    @abstractmethod
+    async def download_track(cls, metadata: TrackMetadata, task_details: TaskDetails, download_path: Optional[Path]) -> Optional[Path]:
         pass
 
     @classmethod
     @abstractmethod
-    async def _download_track(cls, metadata: TrackMetadata, task_details: TaskDetails, download_path: Path):
+    async def download_album(cls, metadata: AlbumMetadata, task_details: TaskDetails):
         pass
 
     @classmethod
     @abstractmethod
-    async def _download_album(cls, metadata: AlbumMetadata, task_details: TaskDetails):
+    async def download_artist(cls, metadata: ArtistMetadata, task_details: TaskDetails):
         pass
 
     @classmethod
     @abstractmethod
-    async def _download_artist(cls, metadata: ArtistMetadata, task_details: TaskDetails):
-        pass
-
-    @classmethod
-    @abstractmethod
-    async def _download_playlist(cls, metadata: PlaylistMetadata, task_details: TaskDetails):
+    async def download_playlist(cls, metadata: PlaylistMetadata, task_details: TaskDetails):
         pass
 
     @staticmethod
-    def get_track_path(task_details: TaskDetails, track: TrackMetadata, extension: str = "mp3") -> Path:
-        """Generate the full path for a track file."""
+    def get_track_path(task_details: TaskDetails, track: TrackMetadata) -> Path:
+        """Generate the full path for a track file (without extension)."""
         artist = format_string('artist', track)
         album = format_string('album', track)
-        track_name = format_string('album', track)
+        track_name = format_string('track', track)
         
         path = (
             task_details.dl_folder / 
             artist / 
             album / 
-            f"{track_name}.{extension}"
+            f"{track_name}"
         )
         path.parent.mkdir(parents=True, exist_ok=True)
         return path
@@ -70,25 +93,11 @@ class Provider(ABC):
 
 
 
+
 class MetadataHandler(ABC):
     @classmethod
     @abstractmethod
-    async def get_metadata(cls, item_id: int, type_: str, task_details: TaskDetails) -> MetadataType:
-        """
-        Get the processed metadata according to the item type.
-
-        Args:
-            item_id: track | album | artist | playlist ID from the provider.
-            type_: track | album | artist | playlist. 
-            task_details: Details of the User task.
-
-        """
-        pass
-
-
-    @classmethod
-    @abstractmethod
-    async def process_track_metadata(cls, track_id: int, track_data: dict, cover_folder: Path) -> MetadataType:
+    async def process_track_metadata(cls, track_id: str, track_data: dict, cover_folder: Path) -> MetadataType:
         """
         Processes track metadata from raw track data from provider.
 
@@ -103,7 +112,7 @@ class MetadataHandler(ABC):
 
     @classmethod
     @abstractmethod
-    async def process_album_metadata(cls, album_id: int, album_data: dict, track_datas: list[dict], cover_folder: Path) -> MetadataType:
+    async def process_album_metadata(cls, album_id: str, album_data: dict, track_datas: list[dict], cover_folder: Path) -> MetadataType:
         """
         Processes album metadata from raw album data from provider.
 

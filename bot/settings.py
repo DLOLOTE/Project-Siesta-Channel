@@ -87,4 +87,4 @@ class BotSettings:
         settings_db.set_variable("TIDAL_AUTH_DATA", 0, True, __encrypt_string__(txt))
 
 
-bot_set = BotSettings()
+bot_settings = BotSettings()

@@ -1,6 +1,6 @@
 from bot.helpers.translations import L
 
-from bot.settings import bot_set
+from bot.settings import bot_settings
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
 main_button = [[InlineKeyboardButton(text=L.MAIN_MENU_BUTTON, callback_data="main_menu")]]
@@ -32,7 +32,7 @@ def main_menu():
 
 def providers_button():
     inline_keyboard = []
-    if bot_set.qobuz:
+    if bot_settings.qobuz:
         inline_keyboard.append(
             [
                 InlineKeyboardButton(
@@ -41,7 +41,7 @@ def providers_button():
                 )
             ]
         )
-    if bot_set.deezer:
+    if bot_settings.deezer:
         inline_keyboard.append(
             [
                 InlineKeyboardButton(
@@ -50,7 +50,7 @@ def providers_button():
                 )
             ]
         )
-    if bot_set.can_enable_tidal:
+    if bot_settings.can_enable_tidal:
         inline_keyboard.append(
             [
                 InlineKeyboardButton(
@@ -67,13 +67,13 @@ def tg_button():
     inline_keyboard = [
         [
             InlineKeyboardButton(
-                text=L.BOT_PUBLIC.format(bot_set.bot_public),
+                text=L.BOT_PUBLIC.format(bot_settings.bot_public),
                 callback_data='botPublic'
             )
         ],
         [
             InlineKeyboardButton(
-                text=L.ANTI_SPAM.format(bot_set.anti_spam),
+                text=L.ANTI_SPAM.format(bot_settings.anti_spam),
                 callback_data='antiSpam'
             )
         ],
@@ -92,11 +92,11 @@ def tg_button():
 def core_buttons():
     inline_keyboard = []
 
-    if bot_set.rclone:
+    if bot_settings.rclone:
         inline_keyboard.append(
             [
                 InlineKeyboardButton(
-                    text=f"Return Link : {bot_set.link_options}",
+                    text=f"Return Link : {bot_settings.link_options}",
                     callback_data='linkOptions'
                 )
             ]
@@ -105,47 +105,47 @@ def core_buttons():
     inline_keyboard += [
         [
             InlineKeyboardButton(
-                text=f"Upload : {bot_set.upload_mode}",
+                text=f"Upload : {bot_settings.upload_mode}",
                 callback_data='upload'
             )
         ],
         [
             InlineKeyboardButton(
-                text=L.SORT_PLAYLIST.format(bot_set.playlist_sort),
+                text=L.SORT_PLAYLIST.format(bot_settings.playlist_sort),
                 callback_data='sortPlay'
             ),
             InlineKeyboardButton(
-                text=L.DISABLE_SORT_LINK.format(bot_set.disable_sort_link),
+                text=L.DISABLE_SORT_LINK.format(bot_settings.disable_sort_link),
                 callback_data='sortLinkPlay'
             )
         ],
         [
             InlineKeyboardButton(
-                text=L.PLAYLIST_ZIP.format(bot_set.playlist_zip),
+                text=L.PLAYLIST_ZIP.format(bot_settings.playlist_zip),
                 callback_data='playZip'
             ),
             InlineKeyboardButton(
-                text=L.PLAYLIST_CONC_BUT.format(bot_set.playlist_conc),
+                text=L.PLAYLIST_CONC_BUT.format(bot_settings.playlist_conc),
                 callback_data='playCONC'
             )
         ],
         [
             InlineKeyboardButton(
-                text=L.ARTIST_BATCH_BUT.format(bot_set.artist_batch),
+                text=L.ARTIST_BATCH_BUT.format(bot_settings.artist_batch),
                 callback_data='artBATCH'
             ),
             InlineKeyboardButton(
-                text=L.ARTIST_ZIP.format(bot_set.artist_zip),
+                text=L.ARTIST_ZIP.format(bot_settings.artist_zip),
                 callback_data='artZip'
             )
         ],
         [
             InlineKeyboardButton(
-                text=L.ALBUM_ZIP.format(bot_set.album_zip),
+                text=L.ALBUM_ZIP.format(bot_settings.album_zip),
                 callback_data='albZip'
             ),
             InlineKeyboardButton(
-                text=L.POST_ART_BUT.format(bot_set.art_poster),
+                text=L.POST_ART_BUT.format(bot_settings.art_poster),
                 callback_data='albArt'
             )
         ]
@@ -182,7 +182,7 @@ def tidal_buttons():
         ]
     ]
 
-    if bot_set.tidal:
+    if bot_settings.tidal:
         inline_keyboard.append(
             [
                 InlineKeyboardButton(
@@ -197,7 +197,7 @@ def tidal_buttons():
 
 def tidal_auth_buttons():
     inline_keyboard = []
-    if bot_set.tidal:
+    if bot_settings.tidal:
         inline_keyboard += [
             [
                 InlineKeyboardButton(
@@ -212,7 +212,7 @@ def tidal_auth_buttons():
                 )
             ]
         ]
-    elif bot_set.can_enable_tidal:
+    elif bot_settings.can_enable_tidal:
         inline_keyboard.append(
             [
                 InlineKeyboardButton(
@@ -256,7 +256,7 @@ def tidal_quality_button(qualities:dict):
     inline_keyboard.append(
         [
             InlineKeyboardButton(
-                    text=F'SPATIAL : {bot_set.tidal.spatial}',
+                    text=F'SPATIAL : {bot_settings.tidal.spatial}',
                     callback_data=f"tdSQ_spatial"
                 )
         ]

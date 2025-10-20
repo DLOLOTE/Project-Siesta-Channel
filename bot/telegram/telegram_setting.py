@@ -3,7 +3,7 @@ from ..helpers.translations import L
 from pyrogram import Client, filters
 from pyrogram.types import CallbackQuery, Message
 
-from ..settings import bot_set
+from ..settings import bot_settings
 from ..helpers.buttons.settings import *
 from ..helpers.database.pg_impl import settings_db
 from ..utils.message import edit_message, check_user
@@ -16,12 +16,12 @@ async def tg_cb(c, cb:CallbackQuery):
         await edit_message(
             cb.message, 
             L.TELEGRAM_PANEL.format(
-                bot_set.bot_public,
-                bot_set.bot_lang,
-                len(bot_set.admins),
-                len(bot_set.auth_users),
-                len(bot_set.auth_chats),
-                bot_set.upload_mode
+                bot_settings.bot_public,
+                bot_settings.bot_lang,
+                len(bot_settings.admins),
+                len(bot_settings.auth_users),
+                len(bot_settings.auth_chats),
+                bot_settings.upload_mode
             ),
             markup=tg_button()
         )
@@ -30,8 +30,8 @@ async def tg_cb(c, cb:CallbackQuery):
 @Client.on_callback_query(filters.regex(pattern=r"^botPublic"))
 async def bot_public_cb(client, cb:CallbackQuery):
     if await check_user(cb.from_user.id, restricted=True):
-        bot_set.bot_public = False if bot_set.bot_public else True
-        settings_db.set_variable('BOT_PUBLIC', bot_set.bot_public)
+        bot_settings.bot_public = False if bot_settings.bot_public else True
+        settings_db.set_variable('BOT_PUBLIC', bot_settings.bot_public)
         try:
             await tg_cb(client, cb)
         except:
@@ -42,9 +42,9 @@ async def bot_public_cb(client, cb:CallbackQuery):
 async def anti_spam_cb(client, cb:CallbackQuery):
     if await check_user(cb.from_user.id, restricted=True):
         anti = ['OFF', 'USER', 'CHAT+']
-        current = anti.index(bot_set.anti_spam)
+        current = anti.index(bot_settings.anti_spam)
         nexti = (current + 1) % 3
-        bot_set.anti_spam = anti[nexti]
+        bot_settings.anti_spam = anti[nexti]
         settings_db.set_variable('ANTI_SPAM', anti[nexti])
         try:
             await tg_cb(client, cb)
@@ -56,7 +56,7 @@ async def anti_spam_cb(client, cb:CallbackQuery):
 @Client.on_callback_query(filters.regex(pattern=r"^langPanel"))
 async def language_panel_cb(client, cb:CallbackQuery):
     if await check_user(cb.from_user.id, restricted=True):
-        current = bot_set.bot_lang
+        current = bot_settings.bot_lang
         await edit_message(
             cb.message,
             L.LANGUAGE_PANEL,
@@ -69,9 +69,9 @@ async def language_panel_cb(client, cb:CallbackQuery):
 async def set_language_cb(client, cb:CallbackQuery):
     if await check_user(cb.from_user.id, restricted=True):
         to_set = cb.data.split('_')[1]
-        bot_set.bot_lang = to_set
+        bot_settings.bot_lang = to_set
         settings_db.set_variable('BOT_LANGUAGE', to_set)
-        bot_set.set_language()
+        bot_settings.set_language()
         try:
             await language_panel_cb(client, cb)
         except:

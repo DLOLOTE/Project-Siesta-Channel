@@ -14,7 +14,7 @@ from config import Config
 from ..helpers.translations import L
 
 from ..logger import LOGGER
-from ..settings import bot_set
+from ..settings import bot_settings
 from .buttons.links import links_button
 
 
@@ -91,7 +91,7 @@ async def create_link(path, basepath):
     rclone_link = None
     index_link = None
 
-    if bot_set.link_options == 'RCLONE' or bot_set.link_options=='Both':
+    if bot_settings.link_options == 'RCLONE' or bot_settings.link_options=='Both':
         cmd = f'rclone link --config ./rclone.conf "{Config.RCLONE_DEST}/{path}"'
         task = await asyncio.create_subprocess_shell(
             cmd,
@@ -106,7 +106,7 @@ async def create_link(path, basepath):
         else:
             error_message = stderr.decode().strip()
             LOGGER.debug(f"Failed to get link: {error_message}")
-    if bot_set.link_options == 'Index' or bot_set.link_options=='Both':
+    if bot_settings.link_options == 'Index' or bot_settings.link_options=='Both':
         if Config.INDEX_LINK:
             index_link =  Config.INDEX_LINK + '/' + quote(path)
 
@@ -116,7 +116,7 @@ async def create_link(path, basepath):
 async def zip_handler(folderpath):
     loop = asyncio.get_running_loop()
     with ThreadPoolExecutor() as pool:
-        if bot_set.upload_mode == 'Telegram':
+        if bot_settings.upload_mode == 'Telegram':
             zips = await loop.run_in_executor(pool, split_zip_folder, folderpath)
         else:
             zips = await loop.run_in_executor(pool, zip_folder, folderpath)
@@ -228,7 +228,7 @@ async def post_art_poster(user:dict, meta:dict):
     else:
         caption = await format_string(L.PLAYLIST_TEMPLATE, meta, user)
     
-    if bot_set.art_poster:
+    if bot_settings.art_poster:
         msg = await send_message(user, photo, 'pic', caption)
         return msg
 
@@ -319,11 +319,11 @@ async def cleanup(user=None, metadata=None, ):
     if metadata:
         try:
             if metadata['type'] == 'album':
-                is_zip = True if bot_set.album_zip else False
+                is_zip = True if bot_settings.album_zip else False
             elif metadata['type'] == 'artist':
-                is_zip = True if bot_set.artist_zip else False
+                is_zip = True if bot_settings.artist_zip else False
             else:
-                is_zip = True if bot_set.playlist_zip else False
+                is_zip = True if bot_settings.playlist_zip else False
             if is_zip:
                 if type(metadata['folderpath']) == list:
                     for i in metadata['folderpath']:

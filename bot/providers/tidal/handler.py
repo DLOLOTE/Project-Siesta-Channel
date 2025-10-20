@@ -1,59 +1,134 @@
 import json
 import base64
 
-from pathvalidate import sanitize_filepath
+from pathlib import Path
 
 from .tidal_api import tidalapi
 from .utils import *
 from .metadata import TidalMetadata
+from .errors import MetadataTypeError
 
-from ..utils.message import send_message
+from ...utils.message import send_message
 
-from ..settings import bot_set
-from ..helpers.translations import L
+from ...settings import bot_settings
+from ...helpers.translations import L
 from bot import Config, LOGGER
-from ..models.provider import Provider
+from ...models.provider import Provider
+from ...utils.downloader import downloader
+
 
 
 
 class TidalHandler(Provider):
     @classmethod
-    async def start(cls, url, task_details):
-        item_id, type_ = await parse_url(url)
+    def parse_url(cls, url):
+        patterns = [
+            (r"/browse/track/(\d+)", "track"),  # Track from browse
+            (r"/browse/artist/(\d+)", "artist"),  # Artist from browse
+            (r"/browse/album/(\d+)", "album"),  # Album from browse
+            (r"/browse/playlist/([\w-]+)", "playlist"),  # Playlist with numeric or UUID
+            (r"/track/(\d+)", "track"),  # Track from listen.tidal.com
+            (r"/artist/(\d+)", "artist"),  # Artist from listen.tidal.com
+            (r"/playlist/([\w-]+)", "playlist"),  # Playlist with numeric or UUID
+            (r"/album/\d+/track/(\d+)", "track"),  # Extract only track ID from album_and_track
+            (r"/album/(\d+)", "album"),
+        ]
+        
+        for pattern, type_ in patterns:
+            match = re.search(pattern, url)
+            if match:
+                return match.group(1), type_
+        
+        raise Exception("TIDAL: Couldn't recognize the URL")
 
-        if not item_id:
-            LOGGER.error('TIDAL: Cannot identify the URL')
-            return
+
+    @classmethod
+    async def get_metadata(cls, item_id, type_, task_details):
+        if type_ == 'track':
+            raw_data = await tidalapi.get_track(item_id)
+            return await TidalMetadata.process_track_metadata(item_id, raw_data, task_details.tempfolder)
+        
+        elif type_ == 'album':
+            raw_data = await tidalapi.get_album(item_id)
+            track_datas = await tidalapi.get_album_tracks(item_id)
+            return await TidalMetadata.process_album_metadata(item_id, raw_data, track_datas['items'], task_details.tempfolder)
+
+        elif type_ == 'artist':
+            raw_data = await tidalapi.get_artist(item_id)
+            _album_datas = await tidalapi.get_artist_albums(item_id)
+            _artist_eps = await tidalapi.get_artist_albums_ep_singles(item_id)
+            album_datas = sort_album_from_artist(_album_datas['items'])
+            album_datas.extend(sort_album_from_artist(_artist_eps['items']))
+            return await TidalMetadata.process_artist_metadata(raw_data, album_datas, task_details.tempfolder)
+
+        else:
+            raise MetadataTypeError
+
+
+    @classmethod
+    async def download_track(cls, metadata, task_details, download_path=None):
+        _session, _quality = get_stream_session(metadata._extra['media_tags'])
 
         try:
-            metadata = await TidalMetadata.get_metadata(item_id, type_, task_details)
+            stream_data = await tidalapi.get_stream_url(metadata.itemid, _quality, _session)
         except Exception as e:
             LOGGER.error(e)
             await send_message(task_details, 'text', text=e)
-            return 
+            return
 
+        metadata.quality, extension = get_quality(stream_data)
 
-        if type_ == 'track':
-            await cls._download_track(metadata)
+        if stream_data['manifestMimeType'] == 'application/dash+xml':
+            manifest = base64.b64decode(stream_data['manifest'])
+            urls, track_codec = parse_mpd(manifest)
+        else:
+            manifest = json.loads(base64.b64decode(stream_data['manifest']))
+            urls = manifest['urls'][0]
+
+        if not download_path:
+            download_path = cls.get_track_path(task_details, metadata)
+
+        download_path = download_path.with_suffix(f".{extension}")
+
+        if type(urls) == list:
+            i = 0
+            temp_files = []
+            for url in urls[0]:
+                temp_path = download_path.with_name(f"{download_path.name}.{i}")
+
+                try:
+                    await downloader.download_file(url, temp_path)
+                except Exception as e:
+                    LOGGER.error(e)
+                    await send_message(task_details, 'text', text=e)
+                    return # abort if any one part fails
+                i+=1
+                temp_files.append(temp_path)
+            await merge_tracks(temp_files, download_path)
+        else:
+            try:
+                await downloader.download_file(urls, download_path)
+            except Exception as e:
+                LOGGER.error(e)
+                await send_message(task_details, 'text', text=e)
+                return
+
+        return download_path
+            
 
 
     @classmethod
-    async def _download_track(cls, metadata, task_details, download_path: Optional[Path] = None):
-        session, quality = await get_stream_session(metadata._extra['media_tags'])
-
-
-    @classmethod
-    async def _download_album(cls, metadata):
+    async def download_album(cls, metadata, task_details):
         pass
 
 
     @classmethod
-    async def _download_artist(cls, metadata):
+    async def download_artist(cls, metadata, task_details):
         pass
 
 
     @classmethod
-    async def _download_playlist(cls, metadata):
+    async def download_playlist(cls, metadata, task_details):
         pass
 
 
@@ -70,7 +145,7 @@ tidal_handler = TidalHandler()
 
 
 
-async def start_tidal(url:str, task_details: TaskDetails):
+async def start_tidal(url:str, task_details):
     item_id, type_ = await parse_url(url)
 
     if type_ == 'track':
@@ -85,7 +160,7 @@ async def start_tidal(url:str, task_details: TaskDetails):
         await send_message(user, "Invalid Tidal URL")
         
 
-async def start_track(track_id: int, task_details: TaskDetails, track_meta:dict | None, \
+async def start_track(track_id: int, task_details, track_meta:dict | None, \
     upload=True, basefolder=None, session=None, quality=None, disable_link=False, disable_msg=False):
     if not track_meta:
         try:
@@ -211,7 +286,7 @@ async def start_album(album_id:int, user:dict, upload=True, basefolder=None):
     }
     await run_concurrent_tasks(tasks, update_details)
 
-    if bot_set.album_zip:
+    if bot_settings.album_zip:
         await edit_message(user['bot_msg'], lang.s.ZIPPING)
         album_meta['folderpath'] = await zip_handler(album_meta['folderpath'])
 
@@ -234,23 +309,23 @@ async def start_artist(artist_id:int, user:dict):
     except Exception as e:
         return await send_message(user, e)
 
-    albums = await sort_album_from_artist(artist_albums['items'])
-    ep_singles = await sort_album_from_artist(artist_eps['items'])
+    albums = sort_album_from_artist(artist_albums['items'])
+    ep_singles = sort_album_from_artist(artist_eps['items'])
     
     albums.extend(ep_singles)
 
     upload_album = True
-    if bot_set.artist_batch:
+    if bot_settings.artist_batch:
         # for telegram, batch upload is not needed
-        upload_album = True if bot_set.upload_mode == 'Telegram' else False
-    if bot_set.artist_zip:
+        upload_album = True if bot_settings.upload_mode == 'Telegram' else False
+    if bot_settings.artist_zip:
         upload_album = False # final decision
 
     for album in albums:
         await start_album(album['id'], user, upload_album, artist_meta['folderpath'])
 
     if not upload_album:
-        if bot_set.artist_zip:
+        if bot_settings.artist_zip:
             await edit_message(user['bot_msg'], lang.s.ZIPPING)
             artist_meta['folderpath'] = await zip_handler(artist_meta['folderpath'])
         

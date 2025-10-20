@@ -51,7 +51,7 @@ class Config(object):
     # Just name of the Downloads Folder
     _DOWNLOADS_FOLDER = getenv("DOWNLOADS_FOLDER", "DOWNLOADS")
     DOWNLOAD_BASE_DIR = Path(WORK_DIR + _DOWNLOADS_FOLDER)
-    LOCAL_STORAGE = getenv("LOCAL_STORAGE", DOWNLOAD_BASE_DIR)
+    LOCAL_STORAGE = Path(getenv("LOCAL_STORAGE", DOWNLOAD_BASE_DIR))
 #--------------------
 
 # FILE/FOLDER NAMING

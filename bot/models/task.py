@@ -5,7 +5,6 @@ from pathlib import Path
 from bot import Config
 
 
-@dataclass
 class TaskDetails:
     def __init__(self, message: Message, url):
         self.message: Message = message
@@ -18,6 +17,7 @@ class TaskDetails:
         self.dl_folder.mkdir(parents=True, exist_ok=True)
         self.tempfolder: Path = Config.DOWNLOAD_BASE_DIR / f"{self.reply_to_message_id}-temp"
         self.tempfolder.mkdir(parents=True, exist_ok=True)
+        self.type_: Optional[str] = None
 
 
     @property

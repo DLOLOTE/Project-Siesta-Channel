@@ -4,7 +4,7 @@ from pyrogram.types import CallbackQuery, Message
 
 from ..helpers.translations import L
 
-from ..settings import bot_set
+from ..settings import bot_settings
 from ..helpers.buttons.settings import *
 from ..helpers.database.pg_impl import settings_db
 
@@ -35,13 +35,13 @@ async def upload_mode_cb(client, cb:CallbackQuery):
     if await check_user(cb.from_user.id, restricted=True):
         modes = ['Local', 'Telegram']
         modes_count = 2
-        if bot_set.rclone:
+        if bot_settings.rclone:
             modes.append('RCLONE')
             modes_count+=1
 
-        current = modes.index(bot_set.upload_mode)
+        current = modes.index(bot_settings.upload_mode)
         nexti = (current + 1) % modes_count
-        bot_set.upload_mode = modes[nexti]
+        bot_settings.upload_mode = modes[nexti]
         settings_db.set_variable('UPLOAD_MODE', modes[nexti])
         try:
             await core_cb(client, cb)
@@ -53,9 +53,9 @@ async def upload_mode_cb(client, cb:CallbackQuery):
 async def link_option_cb(client, cb:CallbackQuery):
     if await check_user(cb.from_user.id, restricted=True):
         options = ['False', 'Index', 'RCLONE', 'Both']
-        current = options.index(bot_set.link_options)
+        current = options.index(bot_settings.link_options)
         nexti = (current + 1) % 4
-        bot_set.link_options = options[nexti]
+        bot_settings.link_options = options[nexti]
         settings_db.set_variable('RCLONE_LINK_OPTIONS', options[nexti])
         try:
             await core_cb(client, cb)
@@ -66,9 +66,9 @@ async def link_option_cb(client, cb:CallbackQuery):
 @Client.on_callback_query(filters.regex(pattern=r"^albArt"))
 async def alb_art_cb(client, cb:CallbackQuery):
     if await check_user(cb.from_user.id, restricted=True):
-        art_post = bot_set.art_poster
+        art_post = bot_settings.art_poster
         art_post = False if art_post else True
-        bot_set.art_poster = art_post
+        bot_settings.art_poster = art_post
         settings_db.set_variable('ART_POSTER', art_post)
         try:
             await core_cb(client, cb)
@@ -78,9 +78,9 @@ async def alb_art_cb(client, cb:CallbackQuery):
 @Client.on_callback_query(filters.regex(pattern=r"^playCONC"))
 async def playlist_conc_cb(client, cb:CallbackQuery):
     if await check_user(cb.from_user.id, restricted=True):
-        play_conc = bot_set.playlist_conc
+        play_conc = bot_settings.playlist_conc
         play_conc = False if play_conc else True
-        bot_set.playlist_conc = play_conc
+        bot_settings.playlist_conc = play_conc
         settings_db.set_variable('PLAYLIST_CONCURRENT', play_conc)
         try:
             await core_cb(client, cb)
@@ -90,9 +90,9 @@ async def playlist_conc_cb(client, cb:CallbackQuery):
 @Client.on_callback_query(filters.regex(pattern=r"^artBATCH"))
 async def artist_conc_cb(client, cb:CallbackQuery):
     if await check_user(cb.from_user.id, restricted=True):
-        artist_batch = bot_set.artist_batch
+        artist_batch = bot_settings.artist_batch
         artist_batch = False if artist_batch else True
-        bot_set.artist_batch = artist_batch
+        bot_settings.artist_batch = artist_batch
         settings_db.set_variable('ARTIST_BATCH_UPLOAD', artist_batch)
         try:
             await core_cb(client, cb)
@@ -102,9 +102,9 @@ async def artist_conc_cb(client, cb:CallbackQuery):
 @Client.on_callback_query(filters.regex(pattern=r"^sortPlay"))
 async def playlist_sort_cb(client, cb:CallbackQuery):
     if await check_user(cb.from_user.id, restricted=True):
-        sort = bot_set.playlist_sort
+        sort = bot_settings.playlist_sort
         sort = False if sort else True
-        bot_set.playlist_sort = sort
+        bot_settings.playlist_sort = sort
         settings_db.set_variable('PLAYLIST_SORT', sort)
         try:
             await core_cb(client, cb)
@@ -115,9 +115,9 @@ async def playlist_sort_cb(client, cb:CallbackQuery):
 @Client.on_callback_query(filters.regex(pattern=r"^playZip"))
 async def playlist_zip_cb(client, cb:CallbackQuery):
     if await check_user(cb.from_user.id, restricted=True):
-        option = bot_set.playlist_zip
+        option = bot_settings.playlist_zip
         option = False if option else True
-        bot_set.playlist_zip = option
+        bot_settings.playlist_zip = option
         settings_db.set_variable('PLAYLIST_ZIP', option)
         try:
             await core_cb(client, cb)
@@ -128,9 +128,9 @@ async def playlist_zip_cb(client, cb:CallbackQuery):
 @Client.on_callback_query(filters.regex(pattern=r"^sortLinkPlay"))
 async def playlist_disable_zip_link(client, cb:CallbackQuery):
     if await check_user(cb.from_user.id, restricted=True):
-        option = bot_set.disable_sort_link
+        option = bot_settings.disable_sort_link
         option = False if option else True
-        bot_set.disable_sort_link = option
+        bot_settings.disable_sort_link = option
         settings_db.set_variable('PLAYLIST_LINK_DISABLE', option)
         try:
             await core_cb(client, cb)
@@ -141,9 +141,9 @@ async def playlist_disable_zip_link(client, cb:CallbackQuery):
 @Client.on_callback_query(filters.regex(pattern=r"^artZip"))
 async def artist_zip_cb(client, cb:CallbackQuery):
     if await check_user(cb.from_user.id, restricted=True):
-        option = bot_set.artist_zip
+        option = bot_settings.artist_zip
         option = False if option else True
-        bot_set.artist_zip = option
+        bot_settings.artist_zip = option
         settings_db.set_variable('ARTIST_ZIP', option)
         try:
             await core_cb(client, cb)
@@ -154,9 +154,9 @@ async def artist_zip_cb(client, cb:CallbackQuery):
 @Client.on_callback_query(filters.regex(pattern=r"^albZip"))
 async def album_zip_cb(client, cb:CallbackQuery):
     if await check_user(cb.from_user.id, restricted=True):
-        option = bot_set.album_zip
+        option = bot_settings.album_zip
         option = False if option else True
-        bot_set.album_zip = option
+        bot_settings.album_zip = option
         settings_db.set_variable('ALBUM_ZIP', option)
         try:
             await core_cb(client, cb)
@@ -200,14 +200,14 @@ async def ban(client:Client, msg:Message):
 
         user = False if str(id).startswith('-100') else True
         if user:
-            if id in bot_set.auth_users:
-                bot_set.auth_users.remove(id)
-                settings_db.set_variable('AUTH_USERS', str(bot_set.auth_users))
+            if id in bot_settings.auth_users:
+                bot_settings.auth_users.remove(id)
+                settings_db.set_variable('AUTH_USERS', str(bot_settings.auth_users))
             else: await send_message(msg, L.USER_DOEST_EXIST)
         else:
-            if id in bot_set.auth_chats:
-                bot_set.auth_chats.remove(id)
-                settings_db.set_variable('AUTH_CHATS', str(bot_set.auth_chats))
+            if id in bot_settings.auth_chats:
+                bot_settings.auth_chats.remove(id)
+                settings_db.set_variable('AUTH_CHATS', str(bot_settings.auth_chats))
             else: await send_message(msg, L.USER_DOEST_EXIST)
         await send_message(msg, L.BAN_ID)
         
@@ -223,14 +223,14 @@ async def auth(client:Client, msg:Message):
 
         user = False if str(id).startswith('-100') else True
         if user:
-            if id not in bot_set.auth_users:
-                bot_set.auth_users.append(id)
-                settings_db.set_variable('AUTH_USERS', str(bot_set.auth_users))
+            if id not in bot_settings.auth_users:
+                bot_settings.auth_users.append(id)
+                settings_db.set_variable('AUTH_USERS', str(bot_settings.auth_users))
             else: await send_message(msg, L.USER_EXIST)
         else:
-            if id not in bot_set.auth_chats:
-                bot_set.auth_chats.append(id)
-                settings_db.set_variable('AUTH_CHATS', str(bot_set.auth_chats))
+            if id not in bot_settings.auth_chats:
+                bot_settings.auth_chats.append(id)
+                settings_db.set_variable('AUTH_CHATS', str(bot_settings.auth_chats))
             else: await send_message(msg, L.USER_EXIST)
         await send_message(msg, L.AUTH_ID)
 
@@ -263,19 +263,19 @@ async def set_var(client: Client, msg: Message):
 
         if var_name in DEEZER_VARS:
             try:
-                await bot_set.deezer.session.close()
+                await bot_settings.deezer.session.close()
             except: pass
-            await bot_set.login_deezer()
+            await bot_settings.login_deezer()
         if var_name in TIDAL_VARS:
             try:
-                await bot_set.tidal.session.close()
+                await bot_settings.tidal.session.close()
             except: pass
-            await bot_set.login_tidal()
+            await bot_settings.login_tidal()
         if var_name in QOBUZ_VARS:
             try:
-                await bot_set.qobuz.session.close()
+                await bot_settings.qobuz.session.close()
             except: pass
-            await bot_set.login_qobuz()
+            await bot_settings.login_qobuz()
 
         await msg.reply(f"✅ `{var_name}` updated and changes applied.", quote=True)
 

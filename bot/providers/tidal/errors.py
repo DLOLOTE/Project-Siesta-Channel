@@ -1,4 +1,4 @@
-from ..models.errors import MetadataTypeError
+from ...models.errors import MetadataTypeError
 
 class InvalidAPIResponse(Exception):
     pass

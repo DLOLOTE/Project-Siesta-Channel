@@ -1,40 +1,14 @@
 from datetime import datetime
 
-from ..models.metadata import TrackMetadata, AlbumMetadata, ArtistMetadata
-from ..utils.downloader import downloader
+from ...models.metadata import TrackMetadata, AlbumMetadata, ArtistMetadata
+from ...utils.downloader import downloader
+from ...models.provider import MetadataHandler
 
-from .utils import sort_album_from_artist
-
-from .tidal_api import tidalapi
-from ..models.provider import MetadataHandler
-from .errors import MetadataTypeError
 
 
 
 class TidalMetadata(MetadataHandler):
-    @classmethod
-    async def get_metadata(cls, item_id, type_, task_details):
-        if type_ == 'track':
-            raw_data = await tidalapi.get_track(item_id)
-            return await cls.process_track_metadata(item_id, raw_data, task_details.tempfolder)
-        
-        elif type_ == 'album':
-            raw_data = await tidalapi.get_album(item_id)
-            track_datas = await tidalapi.get_album_tracks(item_id)
-            return await cls.process_album_metadata(item_id, raw_data, track_datas['items'], task_details.tempfolder)
-
-        elif type_ == 'artist':
-            raw_data = await tidalapi.get_artist(item_id)
-            _album_datas = await tidalapi.get_artist_albums(item_id)
-            _artist_eps = await tidalapi.get_artist_albums_ep_singles(item_id)
-            album_datas = await sort_album_from_artist(_album_datas['items'])
-            album_datas.extend(await sort_album_from_artist(_artist_eps['items']))
-            return await cls.process_artist_metadata(raw_data, album_datas, task_details.tempfolder)
-
-        else:
-            raise MetadataTypeError
-
-
+    
     @classmethod
     async def process_track_metadata(cls, track_id, track_data, cover_folder):
         metadata = TrackMetadata(
@@ -42,7 +16,7 @@ class TidalMetadata(MetadataHandler):
             title=track_data['title'],
             copyright=track_data['copyright'],
             albumartist=track_data['artist']['name'],
-            artist=get_artists_name(track_data),
+            artist=cls.get_artists_name(track_data),
             album=track_data['album']['title'],
             isrc=track_data['isrc'],
             duration=track_data['duration'],
@@ -84,7 +58,7 @@ class TidalMetadata(MetadataHandler):
         if album_data['version']:
             metadata.title += f' ({album_data["version"]})'
 
-        metadata.artist = get_artists_name(album_data)
+        metadata.artist = cls.get_artists_name(album_data)
         metadata.cover = await cls.get_cover(album_data.get('cover'), cover_folder)
         metadata.thumbnail = await cls.get_cover(album_data.get('cover'), cover_folder, True)
 
@@ -124,19 +98,9 @@ class TidalMetadata(MetadataHandler):
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-def get_artists_name(meta:dict):
-    artists = []
-    for a in meta['artists']:
-        artists.append(a['name'])
-    return ', '.join([str(artist) for artist in artists])
+    @classmethod
+    def get_artists_name(cls, meta:dict):
+        artists = []
+        for a in meta['artists']:
+            artists.append(a['name'])
+        return ', '.join([str(artist) for artist in artists])

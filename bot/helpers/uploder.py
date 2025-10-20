@@ -1,6 +1,6 @@
 import os
 
-from ..settings import bot_set
+from ..settings import bot_settings
 from .message import send_message, edit_message
 from .utils import *
 
@@ -11,9 +11,9 @@ from .utils import *
 #
 
 async def track_upload(metadata, user, disable_link=False):
-    if bot_set.upload_mode == 'Local':
+    if bot_settings.upload_mode == 'Local':
         await local_upload(metadata, user)
-    elif bot_set.upload_mode == 'Telegram':
+    elif bot_settings.upload_mode == 'Telegram':
         await telegram_upload(metadata, user)
     else:
         rclone_link, index_link = await rclone_upload(user, metadata['filepath'])
@@ -28,10 +28,10 @@ async def track_upload(metadata, user, disable_link=False):
 
 
 async def album_upload(metadata, user):
-    if bot_set.upload_mode == 'Local':
+    if bot_settings.upload_mode == 'Local':
         await local_upload(metadata, user)
-    elif bot_set.upload_mode == 'Telegram':
-        if bot_set.album_zip:
+    elif bot_settings.upload_mode == 'Telegram':
+        if bot_settings.album_zip:
             for item in metadata['folderpath']:
                 await send_message(user,item,'doc', 
                     caption=await create_simple_text(metadata, user)
@@ -52,10 +52,10 @@ async def album_upload(metadata, user):
 
 
 async def artist_upload(metadata, user):
-    if bot_set.upload_mode == 'Local':
+    if bot_settings.upload_mode == 'Local':
         await local_upload(metadata, user)
-    elif bot_set.upload_mode == 'Telegram':
-        if bot_set.artist_zip:
+    elif bot_settings.upload_mode == 'Telegram':
+        if bot_settings.artist_zip:
             for item in metadata['folderpath']:
                 await send_message(user,item,'doc', 
                     caption=await create_simple_text(metadata, user)
@@ -77,10 +77,10 @@ async def artist_upload(metadata, user):
 
 
 async def playlist_upload(metadata, user):
-    if bot_set.upload_mode == 'Local':
+    if bot_settings.upload_mode == 'Local':
         await local_upload(metadata, user)
-    elif bot_set.upload_mode == 'Telegram':
-        if bot_set.playlist_zip:
+    elif bot_settings.upload_mode == 'Telegram':
+        if bot_settings.playlist_zip:
             for item in metadata['folderpath']:
                 await send_message(user,item,'doc', 
                     caption=await create_simple_text(metadata, user)
@@ -88,14 +88,14 @@ async def playlist_upload(metadata, user):
         else:
             await batch_telegram_upload(metadata, user)
     else:
-        if bot_set.playlist_sort and not bot_set.playlist_zip:
-            if bot_set.disable_sort_link:
+        if bot_settings.playlist_sort and not bot_settings.playlist_zip:
+            if bot_settings.disable_sort_link:
                 await rclone_upload(user, f"{Config.DOWNLOAD_BASE_DIR}/{user['r_id']}/")
             else:
                 for track in metadata['tracks']:
                     try:
                         rclone_link, index_link = await rclone_upload(user, track['filepath'])
-                        if not bot_set.disable_sort_link:
+                        if not bot_settings.disable_sort_link:
                             await post_simple_message(user, track, rclone_link, index_link)
                     except ValueError: # might try to upload track which is not available
                         pass

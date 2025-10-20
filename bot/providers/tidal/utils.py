@@ -1,9 +1,9 @@
+from pathlib import Path
 import re
 import os
 import aiofiles
 import asyncio
 
-from shutil import copyfileobj
 from xml.etree import ElementTree
 
 from .tidal_api import tidalapi
@@ -38,7 +38,7 @@ async def parse_url(url):
     return None, None
 
 
-async def get_stream_session(media_tags: list):
+def get_stream_session(media_tags: list):
     """
     Session needed for the quality chosen
     Returns:
@@ -133,7 +133,7 @@ def parse_mpd(xml: bytes) -> list:
     return tracks, codec
 
 
-async def merge_tracks(temp_tracks: list, output_path: str):
+async def merge_tracks(temp_tracks: list, output_path: Path):
     async with aiofiles.open(output_path, 'wb') as dest_file:
         for temp_location in temp_tracks:
             async with aiofiles.open(temp_location, 'rb') as segment_file:
@@ -147,21 +147,22 @@ async def merge_tracks(temp_tracks: list, output_path: str):
     delete_tasks = [asyncio.to_thread(os.remove, temp_location) for temp_location in temp_tracks]
     await asyncio.gather(*delete_tasks)
 
-async def get_quality(stream_data: dict):
+
+def get_quality(stream_data: dict):
     quality_dict = qualities = {
-        'LOW':'LOW',
-        'HIGH':'HIGH',
-        'LOSSLESS':'LOSSLESS',
-        'HI_RES':'MAX',
-        'HI_RES_LOSSLESS':'MAX'
+        'LOW': ('LOW', 'm4a'),
+        'HIGH': ('HIGH', 'm4a'),
+        'LOSSLESS': ('LOSSLESS', 'flac'),
+        'HI_RES': ('MAX', 'flac'),
+        'HI_RES_LOSSLESS':('MAX', 'm4a')
     }
 
     if stream_data['audioMode'] == 'DOLBY_ATMOS':
-        return 'Dolby ATMOS'
+        return 'Dolby ATMOS', 'm4a'
     return quality_dict[stream_data['audioQuality']]
 
 
-async def sort_album_from_artist(album_data: dict):
+def sort_album_from_artist(album_data: dict):
     albums = []
 
     for album in album_data:
@@ -189,6 +190,7 @@ async def sort_album_from_artist(album_data: dict):
     filtered_tracks = list(unique_albums.values())
 
     return filtered_tracks
+
 
 
 async def ffmpeg_convert(input_file):
