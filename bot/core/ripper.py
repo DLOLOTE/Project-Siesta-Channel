@@ -1,4 +1,4 @@
-from bot import Config, LOGGER
+from bot import Config
 from ..models.task import TaskDetails
 from ..models.provider import Provider
 from ..models.metadata import *

@@ -1,20 +1,21 @@
 import json
 import base64
 
-from pathlib import Path
-
 from .tidal_api import tidalapi
 from .utils import *
 from .metadata import TidalMetadata
 from .errors import MetadataTypeError
 
-from ...utils.message import send_message
+
+from bot import Config, LOGGER
 
 from ...settings import bot_settings
 from ...helpers.translations import L
-from bot import Config, LOGGER
 from ...models.provider import Provider
+
+from ...utils.message import send_message
 from ...utils.downloader import downloader
+from ...utils.metadata import set_metadata
 
 
 
@@ -113,13 +114,24 @@ class TidalHandler(Provider):
                 await send_message(task_details, 'text', text=e)
                 return
 
+        await set_metadata(metadata, download_path)
         return download_path
             
 
 
     @classmethod
     async def download_album(cls, metadata, task_details):
-        pass
+        track_id = metadata.tracks[0].itemid
+        _track_data = await tidalapi.get_track(track_id)
+        _session, _quality = get_stream_session(_track_data)
+        _stream_data = await tidalapi.get_stream_url(track_id, _quality, _session)
+
+        metadata.quality, extension = get_quality(_stream_data)
+
+        tasks = []
+        for track in metadata.tracks:
+            tasks.append(cls.download_track(track, task_details))
+
 
 
     @classmethod
@@ -135,112 +147,6 @@ class TidalHandler(Provider):
 
 tidal_handler = TidalHandler()
 
-
-
-
-
-
-
-
-
-
-
-async def start_tidal(url:str, task_details):
-    item_id, type_ = await parse_url(url)
-
-    if type_ == 'track':
-        await start_track(item_id, task_details, None)
-    elif type_ == 'artist':
-        await start_artist(item_id, task_details)
-    elif type_ == 'album':
-        await start_album(item_id, task_details)
-    elif type_ == 'playlist':
-        pass
-    else:
-        await send_message(user, "Invalid Tidal URL")
-        
-
-async def start_track(track_id: int, task_details, track_meta:dict | None, \
-    upload=True, basefolder=None, session=None, quality=None, disable_link=False, disable_msg=False):
-    if not track_meta:
-        try:
-            _raw_track_meta = await tidalapi.get_track(track_id)
-        except Exception as e:
-            LOGGER.error(e)
-            return await send_message(user, e)
-
-        track_meta = await get_track_metadata(track_id, track_data, user['r_id'])
-        filepath = f"{Config.DOWNLOAD_BASE_DIR}/{user['r_id']}/{track_meta['provider']}/{track_meta['albumartist']}/{track_meta['album']}"
-        # mostly session and quality will not be present
-        session, quality = await get_stream_session(track_data)
-    else:
-        filepath = basefolder
-
-    try:
-        stream_data = await tidalapi.get_stream_url(track_id, quality, session)
-    except Exception as e:
-        error = e
-        # definitely region locked
-        if 'Asset is not ready for playback' in str(e):
-            error = f'Track [{track_id}] is not available in your region'
-        LOGGER.error(error)
-        return await send_message(user, error)
-    
-
-    if stream_data is not None:
-
-        track_meta['quality'] = await get_quality(stream_data)
-
-        if stream_data['manifestMimeType'] == 'application/dash+xml':
-            manifest = base64.b64decode(stream_data['manifest'])
-            urls, track_codec = parse_mpd(manifest)
-        else:
-            manifest = json.loads(base64.b64decode(stream_data['manifest']))
-            track_codec = 'AAC' if 'mp4a' in manifest['codecs'] else manifest['codecs'].upper()
-            urls = manifest['urls'][0]
-
-        
-        track_meta['folderpath'] = filepath
-        filename = await format_string(Config.TRACK_NAME_FORMAT, track_meta, user)
-        # not adding file extention now
-        filepath += f"/{filename}"
-        filepath = sanitize_filepath(filepath)
-        track_meta['filepath'] = filepath
-
-
-        if type(urls) == list:
-            i = 0   # flawless
-            temp_files = []
-            for url in urls[0]:
-                temp_path = f"{filepath}.{i}"
-                err = await download_file(url, temp_path)
-                if err:
-                    return await send_message(user, err)
-                i+=1
-                temp_files.append(temp_path)
-            await merge_tracks(temp_files, filepath)
-        else:
-            err = await download_file(urls, filepath)
-            if err:
-                return await send_message(user, err)
-
-        track_meta['extension'] = await get_audio_extension(filepath)
-        
-        if quality == 'HI_RES_LOSSLESS' and Config.TIDAL_CONVERT_M4A:
-            await ffmpeg_convert(filepath)
-            track_meta['filepath'] = track_meta['filepath'] + '.flac'
-            os.remove(filepath)
-        else:
-            track_meta['filepath'] = track_meta['filepath'] + f".{track_meta['extension']}"
-            # local filepath var is not updated so it contains old path before extention update
-            os.rename(filepath, track_meta['filepath'])
-
-        await set_metadata(track_meta)
-
-        if upload:
-            await track_upload(track_meta, user, False)
-
-    return True
 
         
 

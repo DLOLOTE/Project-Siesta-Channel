@@ -65,6 +65,7 @@ class Provider(ABC):
         
         path = (
             task_details.dl_folder / 
+            track.provider.title() /
             artist / 
             album / 
             f"{track_name}"
@@ -78,7 +79,7 @@ class Provider(ABC):
         artist = format_string('artist', album)
         album_name = format_string('album', album)
         
-        path = task_details.dl_folder / artist / album_name
+        path = task_details.dl_folder / album.provider.title() / artist / album_name
         path.mkdir(parents=True, exist_ok=True)
         return path
 
@@ -87,7 +88,7 @@ class Provider(ABC):
         """Generate the directory path for an artist."""
         artist_name = format_string('artist', artist)
         
-        path = task_details.dl_folder / artist_name
+        path = task_details.dl_folder / artist.provider.title() / artist_name
         path.mkdir(parents=True, exist_ok=True)
         return path
 

@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
+from typing import Optional
 from .task import TaskDetails
+
 from .metadata import MetadataType
 
 

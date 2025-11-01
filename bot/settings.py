@@ -73,7 +73,7 @@ class BotSettings:
             self.upload_mode = db_upload
         else:
             self.upload_mode = 'Local' #force local even if set to rclone when config missing
-    
+        self.upload_mode = "RCLONE"
 
 
     async def save_tidal_login(self, session):

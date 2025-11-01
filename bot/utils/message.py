@@ -5,7 +5,7 @@ from pyrogram.types import Message
 from pyrogram.errors import MessageNotModified, FloodWait
 
 from bot.tgclient import siesta
-from bot.settings import bot_set
+from bot.settings import bot_settings
 
 from ..models.task import TaskDetails
 
@@ -28,12 +28,12 @@ async def check_user(uid=None, msg=None, restricted: bool = False) -> bool:
         bool: True if access is allowed, False otherwise.
     """
     if restricted:
-        return uid in bot_set.admins
+        return uid in bot_settings.admins
 
-    if bot_set.bot_public:
+    if bot_settings.bot_public:
         return True
 
-    all_allowed = set(bot_set.admins) | set(bot_set.auth_chats) | set(bot_set.auth_users)
+    all_allowed = set(bot_settings.admins) | set(bot_settings.auth_chats) | set(bot_settings.auth_users)
     if not msg:
         return False
 
@@ -52,7 +52,7 @@ async def antiSpam(uid: int = None, cid: int = None, revoke: bool = False) -> bo
     Returns:
         bool: True if currently in spam/waiting mode, False otherwise.
     """
-    mode = bot_set.anti_spam
+    mode = bot_settings.anti_spam
     key = cid if mode == "CHAT+" else uid
 
     if key is None:

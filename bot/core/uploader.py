@@ -14,40 +14,15 @@ from ..utils.string import format_string
 class RcloneUploader(Uploader):
     @classmethod
     async def upload(cls, task_details, filepath, metadata):
-        if filepath.is_dir():
-            # simple hack to ensure the folder structure is preserved
-            filepath = Config.DOWNLOAD_BASE_DIR / str(task_details.reply_to_message_id)
+        relative_path = filepath.relative_to(task_details.dl_folder)
         await cls._rclone_upload(filepath)
     
 
     @staticmethod
     async def _rclone_upload(local_path: Path):
-        """Execute rclone upload command."""
-        if local_path.is_dir():
-            cmd = [
-                "rclone", 
-                "copy", 
-                "--config",
-                "./rclone.conf",
-                str(local_path), 
-                Config.RCLONE_DEST
-            ]
-        else:
-            cmd = [
-                "rclone", 
-                "copyto", 
-                "--config",
-                "./rclone.conf",
-                str(local_path), 
-                f"{Config.RCLONE_DEST}/{local_path.name}"
-            ]
-        
-        process = await asyncio.create_subprocess_exec(
-            *cmd,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE
-        )
-        await process.communicate()
+        cmd = f'rclone copy --config ./rclone.conf "{str(local_path)}" "{Config.RCLONE_DEST}"'
+        task = await asyncio.create_subprocess_shell(cmd)
+        await task.wait()
 
 
 
@@ -60,6 +35,9 @@ class TelegramUploader(Uploader):
         else:
             pass
 
+class LocalUploader:
+    pass
+
 
 
 def get_uploader() -> type[Uploader]:
@@ -68,4 +46,4 @@ def get_uploader() -> type[Uploader]:
         'telegram': TelegramUploader,
         'local': LocalUploader,
     }
-    return uploaders.get(bot_settings.upload_mode, TelegramUploader)
+    return uploaders.get(bot_settings.upload_mode.lower(), TelegramUploader)
