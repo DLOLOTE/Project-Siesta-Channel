@@ -3,7 +3,7 @@ import json
 from bot import LOGGER, Config
 
 from .helpers.database.pg_impl import settings_db
-from .helpers.qobuz.qopy import qobuz_api
+from .providers.qobuz.qopy import qobuz_api
 from .helpers.deezer.dzapi import deezerapi
 from .providers.tidal.tidal_api import tidalapi
 from .utils.string import decrypt_string
