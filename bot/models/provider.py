@@ -3,7 +3,6 @@ from pathlib import Path
 
 from .metadata import *
 from .task import TaskDetails
-from ..utils.string import format_string
 
 
 class Provider(ABC):
@@ -23,74 +22,29 @@ class Provider(ABC):
 
     @classmethod
     @abstractmethod
-    async def get_metadata(cls, item_id: str, type_: str, task_details: TaskDetails) -> MetadataType:
-        """
-        Get the processed metadata according to the item type.
+    async def get_track_metadata(cls, item_id: str, task_details: TaskDetails) -> TrackMetadata:
+        pass
 
-        Args:
-            item_id: track | album | artist | playlist ID from the provider.
-            type_: track | album | artist | playlist. 
-            task_details: Details of the User task.
+    @classmethod
+    @abstractmethod
+    async def get_album_metadata(cls, item_id: str, task_details: TaskDetails) -> AlbumMetadata:
+        pass
 
-        """
+    @classmethod
+    @abstractmethod
+    async def get_artist_metadata(cls, item_id: str, task_details: TaskDetails) -> ArtistMetadata:
+        pass
+
+    @classmethod
+    @abstractmethod
+    async def get_playlist_metadata(cls, item_id: str, task_details: TaskDetails) -> PlaylistMetadata:
         pass
 
 
     @classmethod
     @abstractmethod
-    async def download_track(cls, metadata: TrackMetadata, task_details: TaskDetails, download_path: Optional[Path]) -> Optional[Path]:
+    async def download_track(cls, metadata: TrackMetadata, task_details: TaskDetails, download_path: Path) -> Path:
         pass
-
-    @classmethod
-    @abstractmethod
-    async def download_album(cls, metadata: AlbumMetadata, task_details: TaskDetails):
-        pass
-
-    @classmethod
-    @abstractmethod
-    async def download_artist(cls, metadata: ArtistMetadata, task_details: TaskDetails):
-        pass
-
-    @classmethod
-    @abstractmethod
-    async def download_playlist(cls, metadata: PlaylistMetadata, task_details: TaskDetails):
-        pass
-
-    @staticmethod
-    def get_track_path(task_details: TaskDetails, track: TrackMetadata) -> Path:
-        """Generate the full path for a track file (without extension)."""
-        artist = format_string('artist', track)
-        album = format_string('album', track)
-        track_name = format_string('track', track)
-        
-        path = (
-            task_details.dl_folder / 
-            track.provider.title() /
-            artist / 
-            album / 
-            f"{track_name}"
-        )
-        path.parent.mkdir(parents=True, exist_ok=True)
-        return path
-
-    @staticmethod
-    def get_album_dir(task_details: TaskDetails, album: AlbumMetadata) -> Path:
-        """Generate the directory path for an album."""
-        artist = format_string('artist', album)
-        album_name = format_string('album', album)
-        
-        path = task_details.dl_folder / album.provider.title() / artist / album_name
-        path.mkdir(parents=True, exist_ok=True)
-        return path
-
-    @staticmethod
-    def get_artist_dir(task_details: TaskDetails, artist: ArtistMetadata) -> Path:
-        """Generate the directory path for an artist."""
-        artist_name = format_string('artist', artist)
-        
-        path = task_details.dl_folder / artist.provider.title() / artist_name
-        path.mkdir(parents=True, exist_ok=True)
-        return path
 
 
 
@@ -158,7 +112,7 @@ class MetadataHandler(ABC):
 
     @classmethod
     @abstractmethod
-    async def get_cover(cls, cover_id: str, cover_folder: Path, thumbnail: bool = False) -> Path:
+    async def get_cover(cls, cover_id: str, cover_folder: Path, cover_type: str = 'track') -> Path:
         """
         Fetches or creates a cover file for the given cover ID.
         

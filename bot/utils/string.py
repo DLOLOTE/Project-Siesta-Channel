@@ -4,6 +4,7 @@ from dataclasses import asdict
 
 from config import Config
 from ..models.metadata import MetadataType
+from ..helpers.translations import L
 
 
 def sanitize_string(name: str) -> str:
@@ -56,3 +57,14 @@ def format_string(type_, metadata: MetadataType) -> str:
         formatted = formatted.strip(' -')  # Remove leading/trailing spaces and dashes
         clean_string = sanitize_string(formatted)
         return clean_string
+
+
+def format_progress_message(progress, current, total, title, type_):
+    string = L.DOWNLOAD_PROGRESS.format(
+        progress=progress,
+        current=current,
+        total=total,
+        title=title,
+        type_=type_
+    )
+    return string

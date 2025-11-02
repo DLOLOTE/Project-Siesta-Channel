@@ -9,7 +9,7 @@ class ZipHandler:
     MAX_ZIP_SIZE = 2 * 1024 * 1024 * 1024  # 2GB
     
     @classmethod
-    async def should_zip(cls, metadata: MetadataType) -> bool:
+    def should_zip(cls, metadata: MetadataType) -> bool:
         """Determine if content should be zipped based on type and settings."""
         if metadata.type_ == 'album':
             return bot_settings.album_zip
@@ -46,7 +46,15 @@ class ZipHandler:
                     if file_path.is_file():
                         arcname = file_path.relative_to(source_dir)
                         zipf.write(file_path, arcname)
-        
+                        file_path.unlink()
+            # remove empty folders
+            for folder in sorted(source_dir.rglob('*'), reverse=True):
+                if folder.is_dir() and not any(folder.iterdir()):
+                    folder.rmdir()
+
+            if not any(source_dir.iterdir()):
+                source_dir.rmdir()
+    
         await asyncio.to_thread(_zip)
         return [zip_path]
     
@@ -56,7 +64,7 @@ class ZipHandler:
         zip_parts = []
         current_part = 1
         current_size = 0
-        current_zip_path = source_dir.parent / f"{output_name}_part{current_part}.zip"
+        current_zip_path = source_dir.parent / f"{output_name} - Part-{current_part}.zip"
         
         def _create_part():
             nonlocal current_part, current_size, current_zip_path
@@ -74,15 +82,23 @@ class ZipHandler:
                     zipf.close()
                     current_part += 1
                     current_size = 0
-                    current_zip_path = source_dir.parent / f"{output_name}_part{current_part}.zip"
+                    current_zip_path = source_dir.parent / f"{output_name} - Part-{current_part}.zip"
                     zipf = zipfile.ZipFile(current_zip_path, 'w', zipfile.ZIP_DEFLATED)
                     zip_parts.append(current_zip_path)
                 
                 arcname = file_path.relative_to(source_dir)
                 zipf.write(file_path, arcname)
                 current_size += file_size
+
+                file_path.unlink()
             
             zipf.close()
+
+            for folder in sorted(source_dir.rglob('*'), reverse=True):
+                if folder.is_dir() and not any(folder.iterdir()):
+                    folder.rmdir()
+            if not any(source_dir.iterdir()):
+                source_dir.rmdir()
         
         await asyncio.to_thread(_create_part)
         return zip_parts

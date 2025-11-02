@@ -4,10 +4,8 @@ import base64
 from .tidal_api import tidalapi
 from .utils import *
 from .metadata import TidalMetadata
-from .errors import MetadataTypeError
 
-
-from bot import Config, LOGGER
+from bot import LOGGER
 
 from ...settings import bot_settings
 from ...helpers.translations import L
@@ -45,29 +43,61 @@ class TidalHandler(Provider):
 
     @classmethod
     async def get_metadata(cls, item_id, type_, task_details):
-        if type_ == 'track':
-            raw_data = await tidalapi.get_track(item_id)
-            return await TidalMetadata.process_track_metadata(item_id, raw_data, task_details.tempfolder)
-        
-        elif type_ == 'album':
-            raw_data = await tidalapi.get_album(item_id)
-            track_datas = await tidalapi.get_album_tracks(item_id)
-            return await TidalMetadata.process_album_metadata(item_id, raw_data, track_datas['items'], task_details.tempfolder)
+        raw_data = await tidalapi.get_artist(item_id)
+        _album_datas = await tidalapi.get_artist_albums(item_id)
+        _artist_eps = await tidalapi.get_artist_albums_ep_singles(item_id)
+        album_datas = sort_album_from_artist(_album_datas['items'])
+        album_datas.extend(sort_album_from_artist(_artist_eps['items']))
+        return await TidalMetadata.process_artist_metadata(raw_data, album_datas, task_details.tempfolder)
 
-        elif type_ == 'artist':
-            raw_data = await tidalapi.get_artist(item_id)
-            _album_datas = await tidalapi.get_artist_albums(item_id)
-            _artist_eps = await tidalapi.get_artist_albums_ep_singles(item_id)
-            album_datas = sort_album_from_artist(_album_datas['items'])
-            album_datas.extend(sort_album_from_artist(_artist_eps['items']))
-            return await TidalMetadata.process_artist_metadata(raw_data, album_datas, task_details.tempfolder)
-
-        else:
-            raise MetadataTypeError
+    @classmethod
+    async def get_track_metadata(cls, item_id, task_details):
+        raw_data = await tidalapi.get_track(item_id)
+        metadata = await TidalMetadata.process_track_metadata(item_id, raw_data, task_details.tempfolder)
+        return metadata
 
 
     @classmethod
-    async def download_track(cls, metadata, task_details, download_path=None):
+    async def get_album_metadata(cls, item_id: str, task_details):
+        raw_data = await tidalapi.get_album(item_id)
+        track_datas = await tidalapi.get_album_tracks(item_id)
+        metadata = await TidalMetadata.process_album_metadata(item_id, raw_data, track_datas['items'], task_details.tempfolder)
+        
+        track_id = metadata.tracks[0].itemid
+        _track_data = await tidalapi.get_track(track_id)
+        _session, _quality = get_stream_session(_track_data)
+        _stream_data = await tidalapi.get_stream_url(track_id, _quality, _session)
+
+        metadata.quality, metadata.extension = get_quality(_stream_data)
+        return metadata
+
+
+    @classmethod
+    async def get_artist_metadata(cls, item_id, task_details):
+        raw_data = await tidalapi.get_artist(item_id)
+        _album_datas = await tidalapi.get_artist_albums(item_id)
+        _artist_eps = await tidalapi.get_artist_albums_ep_singles(item_id)
+        
+        album_datas = sort_album_from_artist(_album_datas['items'])
+        album_datas.extend(sort_album_from_artist(_artist_eps['items']))
+        
+        metadata = await TidalMetadata.process_artist_metadata(raw_data, album_datas, task_details.tempfolder)
+        
+        for album in metadata._extra['albums']:
+            album_metadata = await cls.get_album_metadata(album['id'], task_details)
+            metadata.albums.append(album_metadata)
+
+        return metadata
+
+
+    @classmethod
+    async def get_playlist_metadata(cls, item_id, task_details):
+        pass
+
+
+
+    @classmethod
+    async def download_track(cls, metadata, task_details, download_path):
         _session, _quality = get_stream_session(metadata._extra['media_tags'])
 
         try:
@@ -85,9 +115,6 @@ class TidalHandler(Provider):
         else:
             manifest = json.loads(base64.b64decode(stream_data['manifest']))
             urls = manifest['urls'][0]
-
-        if not download_path:
-            download_path = cls.get_track_path(task_details, metadata)
 
         download_path = download_path.with_suffix(f".{extension}")
 
@@ -116,124 +143,6 @@ class TidalHandler(Provider):
 
         await set_metadata(metadata, download_path)
         return download_path
-            
-
-
-    @classmethod
-    async def download_album(cls, metadata, task_details):
-        track_id = metadata.tracks[0].itemid
-        _track_data = await tidalapi.get_track(track_id)
-        _session, _quality = get_stream_session(_track_data)
-        _stream_data = await tidalapi.get_stream_url(track_id, _quality, _session)
-
-        metadata.quality, extension = get_quality(_stream_data)
-
-        tasks = []
-        for track in metadata.tracks:
-            tasks.append(cls.download_track(track, task_details))
-
-
-
-    @classmethod
-    async def download_artist(cls, metadata, task_details):
-        pass
-
-
-    @classmethod
-    async def download_playlist(cls, metadata, task_details):
-        pass
-
 
 
 tidal_handler = TidalHandler()
-
-
-        
-
-async def start_album(album_id:int, user:dict, upload=True, basefolder=None):
-    try:
-        album_data = await tidalapi.get_album(album_id)
-    except Exception as e:
-        return await send_message(user, e)
-        
-    tracks_data = await tidalapi.get_album_tracks(album_id)
-    
-    album_meta = await get_album_metadata(album_id, album_data, tracks_data, user['r_id'])
-
-    if basefolder:
-        album_folder = basefolder + f"/{album_meta['title']}"
-    else:
-        album_folder = f"{Config.DOWNLOAD_BASE_DIR}/{user['r_id']}/{album_meta['provider']}/{album_meta['artist']}/{album_meta['title']}"
-    
-    album_folder = sanitize_filepath(album_folder)
-    album_meta['folderpath'] = album_folder
-
-    # get a track to get quality
-    track_id = tracks_data['items'][0]['id']
-    track_data = await tidalapi.get_track(track_id)
-    session, quality = await get_stream_session(track_data)
-    stream_data = await tidalapi.get_stream_url(track_id, quality, session)
-
-    album_meta['quality'] = await get_quality(stream_data)
-
-    if upload:
-        album_meta['poster_msg'] = await post_art_poster(user, album_meta)
-
-    # concurrent
-    tasks = []
-    for track in album_meta['tracks']:
-        tasks.append(start_track(track['itemid'], user, track, False, album_folder, session, quality))
-
-    update_details = {
-        'text': lang.s.DOWNLOAD_PROGRESS,
-        'msg': user['bot_msg'],
-        'title': album_meta['title'],
-        'type': album_meta['type']
-    }
-    await run_concurrent_tasks(tasks, update_details)
-
-    if bot_settings.album_zip:
-        await edit_message(user['bot_msg'], lang.s.ZIPPING)
-        album_meta['folderpath'] = await zip_handler(album_meta['folderpath'])
-
-    # Upload
-    if upload:
-        await edit_message(user['bot_msg'], lang.s.UPLOADING)
-        await album_upload(album_meta, user)
-
-
-
-async def start_artist(artist_id:int, user:dict):
-    artist_data = await tidalapi.get_artist(artist_id)
-    artist_meta = await get_artist_metadata(artist_data, user['r_id'])
-    artist_meta['folderpath'] = f"{Config.DOWNLOAD_BASE_DIR}/{user['r_id']}/{artist_meta['provider']}/{artist_meta['artist']}"
-    artist_meta['folderpath'] = sanitize_filepath(artist_meta['folderpath'])
-    
-    try:
-        artist_albums = await tidalapi.get_artist_albums(artist_id)
-        artist_eps = await tidalapi.get_artist_albums_ep_singles(artist_id)
-    except Exception as e:
-        return await send_message(user, e)
-
-    albums = sort_album_from_artist(artist_albums['items'])
-    ep_singles = sort_album_from_artist(artist_eps['items'])
-    
-    albums.extend(ep_singles)
-
-    upload_album = True
-    if bot_settings.artist_batch:
-        # for telegram, batch upload is not needed
-        upload_album = True if bot_settings.upload_mode == 'Telegram' else False
-    if bot_settings.artist_zip:
-        upload_album = False # final decision
-
-    for album in albums:
-        await start_album(album['id'], user, upload_album, artist_meta['folderpath'])
-
-    if not upload_album:
-        if bot_settings.artist_zip:
-            await edit_message(user['bot_msg'], lang.s.ZIPPING)
-            artist_meta['folderpath'] = await zip_handler(artist_meta['folderpath'])
-        
-        await edit_message(user['bot_msg'], lang.s.UPLOADING)
-        await artist_upload(artist_meta, user)

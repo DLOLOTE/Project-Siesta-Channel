@@ -31,7 +31,7 @@ class TidalMetadata(MetadataHandler):
         parsed_date = datetime.strptime(track_data['streamStartDate'], '%Y-%m-%dT%H:%M:%S.%f%z')
         metadata.date = str(parsed_date.date())
         metadata.cover = await cls.get_cover(track_data['album'].get('cover'), cover_folder)
-        metadata.thumbnail = await cls.get_cover(track_data['album'].get('cover'), cover_folder, True)
+        metadata.thumbnail = await cls.get_cover(track_data['album'].get('cover'), cover_folder, 'thumbnail')
 
         metadata._extra['media_tags'] = track_data['mediaMetadata']['tags']
 
@@ -60,7 +60,7 @@ class TidalMetadata(MetadataHandler):
 
         metadata.artist = cls.get_artists_name(album_data)
         metadata.cover = await cls.get_cover(album_data.get('cover'), cover_folder)
-        metadata.thumbnail = await cls.get_cover(album_data.get('cover'), cover_folder, True)
+        metadata.thumbnail = await cls.get_cover(album_data.get('cover'), cover_folder, 'thumbnail')
 
         for track in track_datas:
             track_meta = await cls.process_track_metadata(track['id'], track, cover_folder)
@@ -72,11 +72,12 @@ class TidalMetadata(MetadataHandler):
     @classmethod
     async def process_artist_metadata(cls, artist_data, album_datas, cover_folder):
         metadata = ArtistMetadata(
+            title=artist_data['name'],
             artist=artist_data['name'],
             provider='tidal'
         )
-        metadata.cover = await cls.get_cover(artist_data.get('picture'), cover_folder)
-        metadata.thumbnail = await cls.get_cover(artist_data.get('picture'), cover_folder, True)
+        metadata.cover = await cls.get_cover(artist_data.get('picture'), cover_folder, 'artist')
+        metadata.thumbnail = metadata.cover # artist doesnt have much resolution option
         metadata._extra['albums'] = album_datas
         return metadata
 
@@ -87,13 +88,15 @@ class TidalMetadata(MetadataHandler):
 
 
     @classmethod
-    async def get_cover(cls, cover_id, cover_folder, thumbnail=False):
-        if thumbnail:
+    async def get_cover(cls, cover_id, cover_folder, cover_type='track'):
+        suffix = ''
+        if cover_type == 'thumbnail':
             url = f'https://resources.tidal.com/images/{cover_id.replace("-", "/")}/80x80.jpg'
             suffix = '-thumb'
+        elif cover_type == 'artist':
+            url = f'https://resources.tidal.com/images/{cover_id.replace("-", "/")}/750x750.jpg'
         else:
             url = f'https://resources.tidal.com/images/{cover_id.replace("-", "/")}/1280x1280.jpg'
-            suffix = ''
         return await downloader.create_cover_file(url, cover_id, cover_folder, suffix)
 
 

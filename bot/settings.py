@@ -42,6 +42,10 @@ class BotSettings:
         self.playlist_zip = self._get_db_value('PLAYLIST_ZIP', type_=bool)
         self.artist_zip = self._get_db_value('ARTIST_ZIP', type_=bool)
 
+        self.album_zip = True
+        self.playlist_zip = True
+        self.artist_zip = True
+
         self.clients = []
 
 

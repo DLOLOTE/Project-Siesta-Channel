@@ -5,7 +5,7 @@ from pathlib import Path
 
 @dataclass
 class _Metadata:
-    itemid: int = 0
+    itemid: str = 0
     title: str = ''
     provider: str = ''
     cover: Optional[Path] = None
@@ -28,6 +28,7 @@ class _AudioMetadata(_Metadata):
     date: str = ''
     volume: int = 1
     totalvolume: int = 1
+    extension: Optional[str] = None
 
 
 @dataclass
