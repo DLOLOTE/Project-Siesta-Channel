@@ -10,13 +10,13 @@ class HI(object):
     DOWNLOAD_PROGRESS = """
 <b>╭─ प्रगति
 │
-├ {0}
+├ {progress}
 │
-├ पूरा हुआ : <code>{1} / {2}</code>
+├ पूरा हुआ : <code>{current} / {total}</code>
 │
-├ शीर्षक : <code>{3}</code>
+├ शीर्षक : <code>{title}</code>
 │
-╰─ प्रकार : <code>{4}</code></b>
+╰─ प्रकार : <code>{type_}</code></b>
 """
     UPLOADING = 'अपलोड हो रहा है........'
     ZIPPING = 'जिप किया जा रहा है........'

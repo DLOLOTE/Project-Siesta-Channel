@@ -10,13 +10,13 @@ class TR(object):
     DOWNLOAD_PROGRESS = """
 <b>╭─ İlerleme
 │
-├ {0}
+├ {progress}
 │
-├ Tamamlandı : <code>{1} / {2}</code>
+├ Tamamlandı : <code>{current} / {total}</code>
 │
-├ Başlık : <code>{3}</code>
+├ Başlık : <code>{title}</code>
 │
-╰─ Tür : <code>{4}</code></b>
+╰─ Tür : <code>{type_}</code></b>
 """
     UPLOADING = 'Yükleniyor........'
     ZIPPING = 'Arşivleniyor........'

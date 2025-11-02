@@ -9,34 +9,6 @@ from xml.etree import ElementTree
 from .tidal_api import tidalapi
 
 
-async def parse_url(url):
-    """
-    Parse url type and ID from Tidal URL
-    Args:
-        url (str): Tidal URL.
-    Returns:
-        id: int
-        type: str
-    """
-    patterns = [
-        (r"/browse/track/(\d+)", "track"),  # Track from browse
-        (r"/browse/artist/(\d+)", "artist"),  # Artist from browse
-        (r"/browse/album/(\d+)", "album"),  # Album from browse
-        (r"/browse/playlist/([\w-]+)", "playlist"),  # Playlist with numeric or UUID
-        (r"/track/(\d+)", "track"),  # Track from listen.tidal.com
-        (r"/artist/(\d+)", "artist"),  # Artist from listen.tidal.com
-        (r"/playlist/([\w-]+)", "playlist"),  # Playlist with numeric or UUID
-        (r"/album/\d+/track/(\d+)", "track"),  # Extract only track ID from album_and_track
-        (r"/album/(\d+)", "album"),
-    ]
-    
-    for pattern, type_ in patterns:
-        match = re.search(pattern, url)
-        if match:
-            return match.group(1), type_
-    
-    return None, None
-
 
 def get_stream_session(media_tags: list):
     """

@@ -10,13 +10,13 @@ class EN(object):
     DOWNLOAD_PROGRESS = """
 <b>╭─ Progress
 │
-├ {0}
+├ {progress}
 │
-├ Done : <code>{1} / {2}</code>
+├ Done : <code>{current} / {total}</code>
 │
-├ Title : <code>{3}</code>
+├ Title : <code>{title}</code>
 │
-╰─ Type : <code>{4}</code></b>
+╰─ Type : <code>{type_}</code></b>
 """
     UPLOADING = 'Uploading........'
     ZIPPING = 'Zipping........'
