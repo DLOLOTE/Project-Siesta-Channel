@@ -7,8 +7,6 @@ from .metadata import TidalMetadata
 
 from bot import LOGGER
 
-from ...settings import bot_settings
-from ...helpers.translations import L
 from ...models.provider import Provider
 
 from ...utils.message import send_message

@@ -4,9 +4,6 @@ from ...models.metadata import TrackMetadata, AlbumMetadata, ArtistMetadata
 from ...utils.downloader import downloader
 from ...models.provider import MetadataHandler
 
-
-
-
 class TidalMetadata(MetadataHandler):
     
     @classmethod
@@ -98,7 +95,6 @@ class TidalMetadata(MetadataHandler):
         else:
             url = f'https://resources.tidal.com/images/{cover_id.replace("-", "/")}/1280x1280.jpg'
         return await downloader.create_cover_file(url, cover_id, cover_folder, suffix)
-
 
 
     @classmethod
