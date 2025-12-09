@@ -20,37 +20,7 @@ async def get_track_metadata(item_id, r_id, q_meta=None):
             q_meta = await qobuz_api.get_track_meta(item_id)
             if not q_meta.get('streamable'):
                 return None, lang.s.ERR_QOBUZ_NOT_STREAMABLE
-        else:
-            return None, lang.s.ERR_QOBUZ_NOT_STREAMABLE
-    
-    metadata = copy.deepcopy(base_meta)
-
-    metadata['tempfolder'] += f"{r_id}-temp/"
-
-    metadata['itemid'] = item_id
-    metadata['copyright'] = q_meta['copyright']
-    metadata['albumartist'] = q_meta['album']['artist']['name']
-    metadata['artist'] = await get_artists_name(q_meta['album'])
-    metadata['upc'] = q_meta['album']['upc']
-    metadata['album'] = q_meta['album']['title']
-    metadata['isrc'] = q_meta['isrc']
-
-    metadata['title'] = q_meta['title']
-    if q_meta['version']:
-        metadata['title'] += f' ({q_meta["version"]})'
-
-    metadata['duration'] = q_meta['duration']
-    metadata['explicit'] = q_meta['parental_warning']
-    metadata['tracknumber'] = q_meta['track_number']
-    metadata['date'] = q_meta['release_date_original']
-    metadata['totaltracks'] = q_meta['album']['tracks_count']
-    metadata['provider'] = 'Qobuz'
-    metadata['type'] = 'track'
-
-    metadata['cover'] = await create_cover_file(q_meta['album']['image']['large'], metadata)
-    metadata['thumbnail'] = await create_cover_file(q_meta['album']['image']['thumbnail'], metadata, True)
-
-    return metadata, None  
+ 
         
 async def get_album_metadata(item_id, r_id):
     q_meta = await qobuz_api.get_album_meta(item_id)
@@ -143,14 +113,7 @@ async def get_artist_meta(artist_raw):
     metadata['provider'] = 'Qobuz'
     return metadata
 
-async def get_artists_name(meta):
-    artists = []
-    try:
-        for a in meta['artists']:
-            artists.append(a['name'])
-    except:
-        artists.append(meta['artist']['name'])
-    return ', '.join([str(artist) for artist in artists])
+
 
 
 async def check_type(url):

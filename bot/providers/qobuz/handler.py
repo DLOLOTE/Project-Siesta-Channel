@@ -1,9 +1,75 @@
+from bot.models.errors import NotAvailableForDownload
 from .utils import *
 from config import Config
 
 from pathvalidate import sanitize_filepath
+from bot.models.provider import Provider
+from .qopy import qobuz_api
+from .metadata import QobuzMetadata
 
-from ..utils import *
+
+class QobuzHandler(Provider):
+    @staticmethod
+    def parse_url(url):
+        r = re.search(
+            r"(?:https:\/\/(?:w{3}|open|play)\.qobuz\.com)?(?:\/[a-z]{2}-[a-z]{2})"
+            r"?\/(album|artist|track|playlist|label|interpreter)(?:\/[-\w\d]+)?\/([\w\d]+)",
+            url,
+        )
+        item_type, item_id = r.groups()
+        item_type = 'artist' if item_type == 'interpreter' else item_type
+        return item_id, item_type
+
+
+    @classmethod
+    async def get_track_metadata(cls, item_id, task_details):
+        stream_data = await qobuz_api.get_track_url(item_id)
+        if "sample" not in stream_data and stream_data.get('sampling_rate'):
+            raw_data = await qobuz_api.get_track_meta(item_id)
+            if not raw_data.get('streamable'):
+                raise NotAvailableForDownload
+        else:
+            raise NotAvailableForDownload
+
+        metadata = await QobuzMetadata.process_track_metadata(item_id, raw_data, task_details.tempfolder)
+        return metadata
+
+
+    @classmethod
+    async def get_album_metadata(cls, item_id: str, task_details):
+        pass
+
+
+    @classmethod
+    async def get_artist_metadata(cls, item_id, task_details):
+        pass
+
+
+    @classmethod
+    async def get_playlist_metadata(cls, item_id, task_details):
+        pass
+
+
+
+    @classmethod
+    async def download_track(cls, metadata, task_details, download_path):
+        pass
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 async def start_qobuz(url:str, user:dict):

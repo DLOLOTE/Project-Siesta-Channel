@@ -1,4 +1,4 @@
-from ...models.errors import CustomError
+from bot.models.errors import *
 
 
 class FreeAccountError(CustomError):

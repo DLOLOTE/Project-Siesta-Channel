@@ -84,8 +84,8 @@ class TidalMetadata(MetadataHandler):
         return await super().process_playlist_metadata(track_datas, cover_folder)
 
 
-    @classmethod
-    async def get_cover(cls, cover_id, cover_folder, cover_type='track'):
+    @staticmethod
+    async def get_cover(cover_id, cover_folder, cover_type='track'):
         suffix = ''
         if cover_type == 'thumbnail':
             url = f'https://resources.tidal.com/images/{cover_id.replace("-", "/")}/80x80.jpg'
@@ -97,8 +97,8 @@ class TidalMetadata(MetadataHandler):
         return await downloader.create_cover_file(url, cover_id, cover_folder, suffix)
 
 
-    @classmethod
-    def get_artists_name(cls, meta:dict):
+    @staticmethod
+    def get_artists_name(meta:dict):
         artists = []
         for a in meta['artists']:
             artists.append(a['name'])

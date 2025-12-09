@@ -17,8 +17,8 @@ from ...utils.metadata import set_metadata
 
 
 class TidalHandler(Provider):
-    @classmethod
-    def parse_url(cls, url):
+    @staticmethod
+    def parse_url(url):
         patterns = [
             (r"/browse/track/(\d+)", "track"),  # Track from browse
             (r"/browse/artist/(\d+)", "artist"),  # Artist from browse
@@ -38,15 +38,6 @@ class TidalHandler(Provider):
         
         raise Exception("TIDAL: Couldn't recognize the URL")
 
-
-    @classmethod
-    async def get_metadata(cls, item_id, type_, task_details):
-        raw_data = await tidalapi.get_artist(item_id)
-        _album_datas = await tidalapi.get_artist_albums(item_id)
-        _artist_eps = await tidalapi.get_artist_albums_ep_singles(item_id)
-        album_datas = sort_album_from_artist(_album_datas['items'])
-        album_datas.extend(sort_album_from_artist(_artist_eps['items']))
-        return await TidalMetadata.process_artist_metadata(raw_data, album_datas, task_details.tempfolder)
 
     @classmethod
     async def get_track_metadata(cls, item_id, task_details):

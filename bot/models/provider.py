@@ -7,9 +7,9 @@ from .task import TaskDetails
 
 class Provider(ABC):
 
-    @classmethod
+    @staticmethod
     @abstractmethod
-    def parse_url(cls, url: str) -> tuple[str, str]:
+    def parse_url(url: str) -> tuple[str, str]:
         """
         Get item id and type from the URL 
         
@@ -110,9 +110,9 @@ class MetadataHandler(ABC):
         pass
 
 
-    @classmethod
+    @staticmethod
     @abstractmethod
-    async def get_cover(cls, cover_id: str, cover_folder: Path, cover_type: str = 'track') -> Path:
+    async def get_cover(cover_id: str, cover_folder: Path, cover_type: str = 'track') -> Path:
         """
         Fetches or creates a cover file for the given cover ID.
         

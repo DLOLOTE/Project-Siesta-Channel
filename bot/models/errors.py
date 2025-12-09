@@ -20,3 +20,7 @@ class DownloadError(Exception):
 
 class MetadataTypeError(CustomError):
     default_message = 'Metadata: Unidentified type of Item'
+
+
+class NotAvailableForDownload(CustomError):
+    default_message = 'Track not available to download.'

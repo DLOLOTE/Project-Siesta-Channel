@@ -143,7 +143,7 @@ class QoClient:
         ]
 
 
-    async def login(self, email, password):
+    async def login(self, email, password, type_='mail'):
         self.load_tokens()
         self.session = aiohttp.ClientSession()
         self.session.headers.update(
@@ -152,11 +152,18 @@ class QoClient:
                 "X-App-Id": self.id,
             }
         )
-        usr_info = await self.api_call(
-            "user/login", 
-            email=email, 
-            pwd=password
-        )
+        if type_ == 'mail':
+            usr_info = await self.api_call(
+                "user/login", 
+                email=email, 
+                pwd=password
+            )
+        else:
+            usr_info = await self.api_call(
+                "user/login", 
+                userid=email, 
+                usertoken=password
+            )
         if not usr_info["user"]["credential"]["parameters"]:
             raise FreeAccountError()
         self.uat = usr_info["user_auth_token"]

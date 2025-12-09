@@ -20,13 +20,13 @@ async def load_clients():
 
 async def login_qobuz():
     if Config.QOBUZ_EMAIL and Config.QOBUZ_PASSWORD:
-        user, pwd = Config.QOBUZ_EMAIL, Config.QOBUZ_PASSWORD
+        user, pwd, type_ = Config.QOBUZ_EMAIL, Config.QOBUZ_PASSWORD, 'mail'
     elif Config.QOBUZ_USER and Config.QOBUZ_TOKEN:
-        user, pwd = Config.QOBUZ_USER, Config.QOBUZ_TOKEN
+        user, pwd, type_ = Config.QOBUZ_USER, Config.QOBUZ_TOKEN, 'token'
     else: return None
 
     try:
-        await qobuz_api.login(user, pwd)
+        await qobuz_api.login(user, pwd, type_)
         quality, _ = settings_db.get_variable("QOBUZ_QUALITY")
         if quality:
             qobuz_api.quality = int(quality)
