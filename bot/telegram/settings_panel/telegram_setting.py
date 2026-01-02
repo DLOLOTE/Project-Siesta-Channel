@@ -1,12 +1,11 @@
-from ..helpers.translations import L
-
 from pyrogram import Client, filters
-from pyrogram.types import CallbackQuery, Message
+from pyrogram.types import CallbackQuery
 
-from ..settings import bot_settings
-from ..helpers.buttons.settings import *
-from ..helpers.database.pg_impl import settings_db
-from ..utils.message import edit_message, check_user
+from bot.settings import bot_settings
+from bot.helpers.translations import L, set_lang
+from bot.buttons.settings import *
+from bot.helpers.database.pg_impl import settings_db
+from bot.utils.message import edit_message, check_user
 
 
 
@@ -56,11 +55,10 @@ async def anti_spam_cb(client, cb:CallbackQuery):
 @Client.on_callback_query(filters.regex(pattern=r"^langPanel"))
 async def language_panel_cb(client, cb:CallbackQuery):
     if await check_user(cb.from_user.id, restricted=True):
-        current = bot_settings.bot_lang
         await edit_message(
             cb.message,
             L.LANGUAGE_PANEL,
-            language_buttons(lang_available, current)
+            language_buttons()
         )
 
 
@@ -68,13 +66,11 @@ async def language_panel_cb(client, cb:CallbackQuery):
 @Client.on_callback_query(filters.regex(pattern=r"^langSet"))
 async def set_language_cb(client, cb:CallbackQuery):
     if await check_user(cb.from_user.id, restricted=True):
-        to_set = cb.data.split('_')[1]
+        to_set: str = cb.data.split('_')[1]
         bot_settings.bot_lang = to_set
         settings_db.set_variable('BOT_LANGUAGE', to_set)
-        bot_settings.set_language()
+        set_lang(to_set.lower())
         try:
             await language_panel_cb(client, cb)
         except:
             pass
-
-

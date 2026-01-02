@@ -1,25 +1,14 @@
-from bot import CMD
 from pyrogram import Client, filters
-from pyrogram.types import CallbackQuery, Message
+from pyrogram.types import CallbackQuery
 
-from ..helpers.translations import L
+from bot.helpers.translations import L
 
-from ..settings import bot_settings
-from ..utils.message import send_text, check_user, edit_message
-from ..helpers.buttons.settings import *
-from ..helpers.database.pg_impl import settings_db
-
-from bot.models.task import TaskDetails
+from bot.settings import bot_settings
+from bot.utils.message import check_user, edit_message
+from bot.buttons.settings import core_buttons
+from bot.helpers.database.pg_impl import settings_db
 from bot.models.uploader import UploaderTypes
 
-from config import DEEZER_VARS, TIDAL_VARS, QOBUZ_VARS, Config
-
-
-@Client.on_message(filters.command(CMD.SETTINGS))
-async def settings(c, message):
-    if await check_user(message.from_user.id, restricted=True):
-        task_details = TaskDetails(message, None)
-        await send_text(L.INIT_SETTINGS_PANEL, task_details, markup=main_menu())
 
 
 @Client.on_callback_query(filters.regex(pattern=r"^corePanel"))
@@ -171,122 +160,3 @@ async def album_zip_cb(client, cb:CallbackQuery):
             await core_cb(client, cb)
         except:
             pass
-
-
-
-#--------------------
-
-# COMMON
-
-#--------------------
-@Client.on_callback_query(filters.regex(pattern=r"^main_menu"))
-async def main_menu_cb(client, cb:CallbackQuery):
-    if await check_user(cb.from_user.id, restricted=True):
-        try:
-            await edit_message(cb.message, L.INIT_SETTINGS_PANEL, markup=main_menu())
-        except:
-            pass
-
-@Client.on_callback_query(filters.regex(pattern=r"^close"))
-async def close_cb(client, cb:CallbackQuery):
-    if await check_user(cb.from_user.id, restricted=True):
-        try:
-            await client.delete_messages(
-                chat_id=cb.message.chat.id,
-                message_ids=cb.message.id
-            )
-        except:
-            pass
-
-@Client.on_message(filters.command(CMD.BAN))
-async def ban(client:Client, msg:Message):
-    if await check_user(msg.from_user.id, restricted=True):
-        try:
-            id = int(msg.text.split(" ", maxsplit=1)[1])
-        except:
-            await send_message(msg, L.BAN_AUTH_FORMAT)
-            return
-
-        user = False if str(id).startswith('-100') else True
-        if user:
-            if id in bot_settings.auth_users:
-                bot_settings.auth_users.remove(id)
-                settings_db.set_variable('AUTH_USERS', str(bot_settings.auth_users))
-            else: await send_message(msg, L.USER_DOEST_EXIST)
-        else:
-            if id in bot_settings.auth_chats:
-                bot_settings.auth_chats.remove(id)
-                settings_db.set_variable('AUTH_CHATS', str(bot_settings.auth_chats))
-            else: await send_message(msg, L.USER_DOEST_EXIST)
-        await send_message(msg, L.BAN_ID)
-        
-
-@Client.on_message(filters.command(CMD.AUTH))
-async def auth(client:Client, msg:Message):
-    if await check_user(msg.from_user.id, restricted=True):
-        try:
-            id = int(msg.text.split(" ", maxsplit=1)[1])
-        except:
-            await send_message(msg, L.BAN_AUTH_FORMAT)
-            return
-
-        user = False if str(id).startswith('-100') else True
-        if user:
-            if id not in bot_settings.auth_users:
-                bot_settings.auth_users.append(id)
-                settings_db.set_variable('AUTH_USERS', str(bot_settings.auth_users))
-            else: await send_message(msg, L.USER_EXIST)
-        else:
-            if id not in bot_settings.auth_chats:
-                bot_settings.auth_chats.append(id)
-                settings_db.set_variable('AUTH_CHATS', str(bot_settings.auth_chats))
-            else: await send_message(msg, L.USER_EXIST)
-        await send_message(msg, L.AUTH_ID)
-
-
-@Client.on_message(filters.command(CMD.LOG))
-async def send_log(client:Client, msg:Message):
-    if await check_user(msg.from_user.id, restricted=True):
-        user = await fetch_user_details(msg)
-        await send_message(
-            user, 
-            './bot/bot_logs.log',
-            'doc'
-        )
-
-
-@Client.on_message(filters.command(CMD.SETVAR))
-async def set_var(client: Client, msg: Message):
-    if not await check_user(msg.from_user.id, restricted=True):
-        return
-
-    try:
-        _, var_name, *var_value = msg.text.split(maxsplit=2)
-        var_value = ' '.join(var_value).strip()
-
-        if not var_value:
-            return await msg.reply("Missing value. Usage: `/setvar VAR_NAME value`", quote=True)
-
-        setattr(Config, var_name, var_value)
-        settings_db.set_variable(var_name, var_value)
-
-        if var_name in DEEZER_VARS:
-            try:
-                await bot_settings.deezer.session.close()
-            except: pass
-            await bot_settings.login_deezer()
-        if var_name in TIDAL_VARS:
-            try:
-                await bot_settings.tidal.session.close()
-            except: pass
-            await bot_settings.login_tidal()
-        if var_name in QOBUZ_VARS:
-            try:
-                await bot_settings.qobuz.session.close()
-            except: pass
-            await bot_settings.login_qobuz()
-
-        await msg.reply(f"✅ `{var_name}` updated and changes applied.", quote=True)
-
-    except Exception as e:
-        await msg.reply("Missing value. Usage: `/setvar VAR_NAME value`", quote=True)

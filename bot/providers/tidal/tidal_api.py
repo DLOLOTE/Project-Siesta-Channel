@@ -131,6 +131,8 @@ class TidalApi:
             await self.refresh_mobile(None)
         except: LOGGER.error('TIDAL: Login using Mobile Failed')
 
+        return self.sub_type
+
 
     async def login_from_saved(self, tv_token: str, tv_secret: str, m_hires: str, m_atmos: str, data: dict):
         self.session = aiohttp.ClientSession()

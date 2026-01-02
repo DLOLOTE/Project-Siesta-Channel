@@ -1,15 +1,18 @@
-from ..helpers.translations import L
-
 from pyrogram import Client, filters
 from pyrogram.types import CallbackQuery, Message
 
-from config import Config
+from bot import Config
+from bot.settings import bot_settings
 
-from ..settings import bot_settings
-from ..helpers.buttons.settings import *
-from ..helpers.database.pg_impl import settings_db
-from ..providers.tidal.tidal_api import tidalapi
-from ..utils.message import edit_message, check_user
+from bot.buttons.settings import providers_button
+from bot.buttons.tidal import *
+from bot.buttons.qobuz import *
+
+from bot.models.types import QobuzQuality, TidalQuality, TidalSpatial
+from bot.helpers.database.pg_impl import settings_db
+from bot.providers.tidal.tidal_api import tidalapi
+from bot.utils.message import edit_message, check_user
+from bot.helpers.translations import L
 
 
 
@@ -27,27 +30,38 @@ async def provider_cb(c, cb:CallbackQuery):
 # QOBUZ
 #----------------
 @Client.on_callback_query(filters.regex(pattern=r"^qbP"))
-async def qobuz_cb(c, cb:CallbackQuery):
+async def qobuz_cb(c, cb: CallbackQuery):
     if await check_user(cb.from_user.id, restricted=True):
-        quality = {5:'MP3 320', 6:'Lossless', 7:'24B<=96KHZ',27:'24B>96KHZ'}
-        current = bot_settings.qobuz.quality
-        quality[current] = quality[current] + '✅'
+        current_id = bot_settings.qobuz.quality
+
+        quality_display = {}
+        for q in QobuzQuality:
+            text = q.label
+            if q.value == current_id: text += ' ✅'
+            quality_display[q.value] = text
+
         try:
             await edit_message(
                 cb.message,
                 L.QOBUZ_QUALITY_PANEL,
-                markup=qb_button(quality)
+                markup=qb_button(quality_display)
             )
-        except:pass
+        except Exception:
+            pass
 
 @Client.on_callback_query(filters.regex(pattern=r"^qbQ"))
-async def qobuz_quality_cb(c, cb:CallbackQuery):
+async def qobuz_quality_cb(c, cb: CallbackQuery):
     if await check_user(cb.from_user.id, restricted=True):
-        qobuz = {5:'MP3 320', 6:'Lossless', 7:'24B<=96KHZ',27:'24B>96KHZ'}
-        to_set = cb.data.split('_')[1]
-        bot_settings.qobuz.quality = list(filter(lambda x: qobuz[x] == to_set, qobuz))[0]
-        settings_db.set_variable('QOBUZ_QUALITY', bot_settings.qobuz.quality)
-        await qobuz_cb(c, cb)
+        try:
+            data_id = int(cb.data.split('_')[1])
+            new_quality = QobuzQuality(data_id)
+
+            bot_settings.qobuz.quality = new_quality.value
+            settings_db.set_variable('QOBUZ_QUALITY', new_quality.value)
+
+            await qobuz_cb(c, cb)
+        except (ValueError, IndexError):
+            pass
 
 
 #----------------
@@ -64,52 +78,56 @@ async def tidal_cb(c, cb:CallbackQuery):
     
 
 @Client.on_callback_query(filters.regex(pattern=r"^tdQ"))
-async def tidal_quality_cb(c, cb:CallbackQuery):
+async def tidal_quality_cb(c, cb: CallbackQuery):
     if await check_user(cb.from_user.id, restricted=True):
-        qualities = {
-            'LOW': 'LOW',
-            'HIGH': 'HIGH',
-            'LOSSLESS': 'LOSSLESS'
-        }
-        if tidalapi.mobile_hires:
-            qualities['HI_RES'] = 'MAX'
-        qualities[tidalapi.quality] += '✅'
+        quality_display = {}
+        for q in TidalQuality:
+            if q == TidalQuality.HI_RES and not tidalapi.mobile_hires:
+                continue
+            text = q.value
+            if tidalapi.quality == q.name: text += ' ✅'
+            quality_display[q.name] = text
 
-        await edit_message(
-            cb.message,
-            L.TIDAL_PANEL,
-            tidal_quality_button(qualities)
-        )
+        try:
+            await edit_message(
+                cb.message,
+                L.TIDAL_PANEL,
+                markup=tidal_quality_button(quality_display)
+            )
+        except Exception:
+            pass
+
 
 
 @Client.on_callback_query(filters.regex(pattern=r"^tdSQ"))
-async def tidal_set_quality_cb(c, cb:CallbackQuery):
+async def tidal_set_quality_cb(c, cb: CallbackQuery):
     if await check_user(cb.from_user.id, restricted=True):
-        to_set = cb.data.split('_')[1]
-  
-        if to_set == 'spatial':
-            #options = ['OFF', 'ATMOS AC3 JOC', 'ATMOS AC4', 'Sony 360RA']
-            # assuming atleast tv session is added
-            options = ['OFF', 'ATMOS AC3 JOC']
+        action_key = cb.data.split('_')[1]
+
+        if action_key == 'spatial':
+            allowed_spatial = [TidalSpatial.OFF, TidalSpatial.ATMOS_AC3]
             if tidalapi.mobile_atmos:
-                options.append('ATMOS AC4')
+                allowed_spatial.append(TidalSpatial.ATMOS_AC4)
             if tidalapi.mobile_atmos or tidalapi.mobile_hires:
-                options.append('Sony 360RA')
+                allowed_spatial.append(TidalSpatial.SONY_360RA)
 
             try:
-                current = options.index(tidalapi.spatial)
-            except:
-                current = 0
-                
-            nexti = (current + 1) % 4
-            tidalapi.spatial = options[nexti]
-            settings_db.set_variable('TIDAL_SPATIAL', options[nexti])
+                current_enum = next(s for s in allowed_spatial if s.value == tidalapi.spatial)
+                current_idx = allowed_spatial.index(current_enum)
+            except (StopIteration, ValueError):
+                current_idx = 0
+
+            next_idx = (current_idx + 1) % len(allowed_spatial)
+            new_setting = allowed_spatial[next_idx]
+            tidalapi.spatial = new_setting.value
+            settings_db.set_variable('TIDAL_SPATIAL', new_setting.value)
+
         else:
-            qualities = {'LOW':'LOW','HIGH':'HIGH','LOSSLESS':'LOSSLESS','HI_RES':'MAX'}
-            to_set = list(filter(lambda x: qualities[x] == to_set, qualities))[0]
-            tidalapi.quality = to_set
-            settings_db.set_variable('TIDAL_QUALITY', to_set)
-            
+            if action_key in TidalQuality.__members__:
+                new_quality = TidalQuality[action_key]
+                tidalapi.quality = new_quality.value
+                settings_db.set_variable('TIDAL_QUALITY', tidalapi.quality)
+
         await tidal_quality_cb(c, cb)
 
 
@@ -129,30 +147,25 @@ async def tidal_auth_cb(c, cb:CallbackQuery):
             tidal_auth_buttons()
         )
 
+
 @Client.on_callback_query(filters.regex(pattern=r"^tdLogin"))
 async def tidal_login_cb(c:Client, cb:CallbackQuery):
     if await check_user(cb.from_user.id, restricted=True):
-        auth_url, err = await tidalapi.get_tv_login_url()
-        if err:
-            return await c.answer_callback_query(
-                cb.id,
-                err,
-                True
-            )
-    
+        auth_url = await tidalapi.get_tv_login_url(
+            Config.TIDAL_TV_TOKEN,
+            Config.TIDAL_TV_SECRET,
+            Config.TIDAL_MOBILE_TOKEN,
+            Config.TIDAL_ATMOS_MOBILE_TOKEN
+        )
+
         await edit_message(
             cb.message,
             L.TIDAL_AUTH_URL.format(auth_url),
             tidal_auth_buttons()
         )
 
-        sub, err = await tidalapi.login_tv()
-        if err:
-            return await edit_message(
-                cb.message,
-                L.ERR_LOGIN_TIDAL_TV_FAILED.format(err),
-                tidal_auth_buttons()
-            )
+        sub = await tidalapi.login_tv()
+
         if sub:
             bot_settings.tidal = tidalapi
             bot_settings.clients.append(tidalapi)
@@ -167,6 +180,7 @@ async def tidal_login_cb(c:Client, cb:CallbackQuery):
                 L.TIDAL_AUTH_PANEL.format(sub, hires, atmos, tv) + '\n' + L.TIDAL_AUTH_SUCCESSFULL,
                 tidal_auth_buttons()
             )
+
 
 @Client.on_callback_query(filters.regex(pattern=r"^tdRemove"))
 async def tidal_remove_login_cb(c:Client, cb:CallbackQuery):
