@@ -8,6 +8,8 @@ from bot import LOGGER, Config
 from .helpers.translations import set_lang
 from .helpers.database.pg_impl import settings_db
 
+from bot.models.uploader import UploaderTypes
+
 
 class BotSettings:
     def __init__(self):
@@ -68,12 +70,11 @@ class BotSettings:
             
         db_upload = self._get_db_value('UPLOAD_MODE')
         if self.rclone and db_upload == 'RCLONE':
-            self.upload_mode = 'RCLONE'
+            self.upload_mode = UploaderTypes.RCLONE
         elif db_upload == 'Telegram' or db_upload == 'Local':
-            self.upload_mode = db_upload
+            self.upload_mode = UploaderTypes(db_upload)
         else:
-            self.upload_mode = 'Local' #force local even if set to rclone when config missing
-        self.upload_mode = "RCLONE"
+            self.upload_mode = UploaderTypes.LOCAL #force local even if set to rclone when config missing
 
 
     async def save_tidal_login(self, session):

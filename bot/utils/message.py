@@ -199,3 +199,15 @@ async def send_audio(audio, metadata, task_details, chat_id: Optional[int] = Non
         audio=audio
     )
     return msg
+
+
+async def send_text(text, task_details, chat_id: Optional[int] = None, markup=None):
+    chat_id = chat_id or task_details.chat_id
+    msg = await safe_telegram_call(
+        siesta.send_message,
+        text=text,
+        chat_id=chat_id,
+        reply_to_message_id=task_details.reply_to_message_id,
+        reply_markup=markup
+    )
+    return msg

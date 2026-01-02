@@ -6,10 +6,9 @@ from pyrogram import Client, filters
 from bot import LOGGER, CMD, Config
 
 from ..helpers.translations import L
-from ..utils.message import send_message, antiSpam, check_user
+from ..utils.message import send_text, antiSpam, check_user
 from ..models.task import TaskDetails
 from ..core.ripper import Ripper
-
 
 
 @Client.on_message(filters.command(CMD.DOWNLOAD))
@@ -29,15 +28,18 @@ async def download_track(c, msg: Message):
         spam = await antiSpam(msg.from_user.id, msg.chat.id)
         if not spam:
             task_details = TaskDetails(msg, url)
-            task_details.bot_msg = await send_message(task_details,'text', text=L.DOWNLOADING)
+            task_details.bot_msg = await send_text(L.DOWNLOADING, task_details)
 
             try:
                 await Ripper.start(url, task_details)
-                await send_message(task_details, 'text', text=L.TASK_COMPLETED)
+                await send_text(L.TASK_COMPLETED, task_details)
             except Exception as e:
                 LOGGER.error(e)
 
-            await c.delete_messages(msg.chat.id, task_details.bot_msg.id)
+            try:
+                await c.delete_messages(msg.chat.id, task_details.bot_msg.id)
+            except:
+                pass
 
             shutil.rmtree(f"{Config.DOWNLOAD_BASE_DIR}/{task_details.reply_to_message_id}/", ignore_errors=True)
             shutil.rmtree(f"{Config.DOWNLOAD_BASE_DIR}/{task_details.reply_to_message_id}-temp/", ignore_errors=True)

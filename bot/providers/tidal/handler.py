@@ -9,7 +9,7 @@ from bot import LOGGER
 
 from ...models.provider import Provider
 
-from ...utils.message import send_message
+from ...utils.message import send_text
 from ...utils.downloader import downloader
 from ...utils.metadata import set_metadata
 
@@ -93,7 +93,7 @@ class TidalHandler(Provider):
             stream_data = await tidalapi.get_stream_url(metadata.itemid, _quality, _session)
         except Exception as e:
             LOGGER.error(e)
-            await send_message(task_details, 'text', text=e)
+            await send_text(e, task_details)
             return
 
         metadata.quality, extension = get_quality(stream_data)
@@ -117,7 +117,7 @@ class TidalHandler(Provider):
                     await downloader.download_file(url, temp_path)
                 except Exception as e:
                     LOGGER.error(e)
-                    await send_message(task_details, 'text', text=e)
+                    await send_text(e, task_details)
                     return # abort if any one part fails
                 i+=1
                 temp_files.append(temp_path)
@@ -127,7 +127,7 @@ class TidalHandler(Provider):
                 await downloader.download_file(urls, download_path)
             except Exception as e:
                 LOGGER.error(e)
-                await send_message(task_details, 'text', text=e)
+                await send_text(e, task_details)
                 return
 
         await set_metadata(metadata, download_path)

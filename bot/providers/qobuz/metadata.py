@@ -39,10 +39,7 @@ class QobuzMetadata(MetadataHandler):
 
     @classmethod
     async def process_album_metadata(cls, album_id, album_data, cover_folder):
-        metadata = AlbumMetadata(
-            itemid=album_id,
-            albumartist=
-        )
+        pass
 
 
     @staticmethod

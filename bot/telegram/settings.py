@@ -5,22 +5,25 @@ from pyrogram.types import CallbackQuery, Message
 from ..helpers.translations import L
 
 from ..settings import bot_settings
+from ..utils.message import send_text, check_user, edit_message
 from ..helpers.buttons.settings import *
 from ..helpers.database.pg_impl import settings_db
 
-from config import DEEZER_VARS, TIDAL_VARS, QOBUZ_VARS, Config
+from bot.models.task import TaskDetails
+from bot.models.uploader import UploaderTypes
 
+from config import DEEZER_VARS, TIDAL_VARS, QOBUZ_VARS, Config
 
 
 @Client.on_message(filters.command(CMD.SETTINGS))
 async def settings(c, message):
     if await check_user(message.from_user.id, restricted=True):
-        user = await fetch_user_details(message)
-        await send_message(user, L.INIT_SETTINGS_PANEL, markup=main_menu())
+        task_details = TaskDetails(message, None)
+        await send_text(L.INIT_SETTINGS_PANEL, task_details, markup=main_menu())
 
 
 @Client.on_callback_query(filters.regex(pattern=r"^corePanel"))
-async def core_cb(client, cb:CallbackQuery):
+async def core_cb(c, cb:CallbackQuery):
     if await check_user(cb.from_user.id, restricted=True):
         await edit_message(
             cb.message,
@@ -29,24 +32,30 @@ async def core_cb(client, cb:CallbackQuery):
         )
 
 
+@Client.on_callback_query(filters.regex(r"^upload"))
+async def upload_mode_cb(client, cb: CallbackQuery):
+    if not await check_user(cb.from_user.id, restricted=True):
+        return
 
-@Client.on_callback_query(filters.regex(pattern=r"^upload"))
-async def upload_mode_cb(client, cb:CallbackQuery):
-    if await check_user(cb.from_user.id, restricted=True):
-        modes = ['Local', 'Telegram']
-        modes_count = 2
-        if bot_settings.rclone:
-            modes.append('RCLONE')
-            modes_count+=1
+    modes = [UploaderTypes.LOCAL, UploaderTypes.TELEGRAM]
+    if bot_settings.rclone:
+        modes.append(UploaderTypes.RCLONE)
 
-        current = modes.index(bot_settings.upload_mode)
-        nexti = (current + 1) % modes_count
-        bot_settings.upload_mode = modes[nexti]
-        settings_db.set_variable('UPLOAD_MODE', modes[nexti])
-        try:
-            await core_cb(client, cb)
-        except:
-            pass
+    current_index = (
+        modes.index(bot_settings.upload_mode)
+        if bot_settings.upload_mode in modes
+        else 0
+    )
+
+    next_index = (current_index + 1) % len(modes)
+    next_mode = modes[next_index]
+    bot_settings.upload_mode = next_mode
+    settings_db.set_variable('UPLOAD_MODE', next_mode.value)
+
+    try:
+        await core_cb(client, cb)
+    except Exception:
+        pass
 
 
 @Client.on_callback_query(filters.regex(pattern=r"^linkOption"))
@@ -54,7 +63,7 @@ async def link_option_cb(client, cb:CallbackQuery):
     if await check_user(cb.from_user.id, restricted=True):
         options = ['False', 'Index', 'RCLONE', 'Both']
         current = options.index(bot_settings.link_options)
-        nexti = (current + 1) % 4
+        nexti = (current + 1) % len(options)
         bot_settings.link_options = options[nexti]
         settings_db.set_variable('RCLONE_LINK_OPTIONS', options[nexti])
         try:
