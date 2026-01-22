@@ -42,9 +42,10 @@ class Config(object):
         DATABASE_URL = getenv("DATABASE_URL")
         BOT_USERNAME = getenv("BOT_USERNAME")
         ADMINS = set(int(x) for x in getenv("ADMINS").split())
-    except:
-        LOGGER.warning("BOT : Essential Configs are missing")
-        exit(1)
+        DUMP_CHANNEL_ID = int(getenv("DUMP_CHANNEL_ID"))  # <-- Add this line for channel dump
+except:
+    LOGGER.warning("BOT : Essential Configs are missing")
+    exit(1)
 
 
 #--------------------
